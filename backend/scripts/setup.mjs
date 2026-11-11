@@ -5,12 +5,12 @@ import { fileURLToPath } from 'node:url';
 const root = new URL('../', import.meta.url);
 process.chdir(fileURLToPath(root));
 for (const [example, target] of [
-  ['backend/.env.example', 'backend/.env'],
-  ['frontend/.env.example', 'frontend/.env.local'],
+  ['.env.example', '.env'],
+  ['../frontend/.env.example', '../frontend/.env.local'],
 ]) {
   if (!existsSync(target)) {
     copyFileSync(example, target);
-    if (target === 'backend/.env')
+    if (target === '.env')
       writeFileSync(
         target,
         readFileSync(target, 'utf8').replace(
@@ -39,4 +39,4 @@ for (const [cmd, args] of commands) {
     process.exit(result.status || 1);
   }
 }
-console.log('Ready. Run npm run dev and open http://localhost:3300');
+console.log('Ready. Run npm run dev in backend, and npm run dev in frontend. Open http://localhost:3300');

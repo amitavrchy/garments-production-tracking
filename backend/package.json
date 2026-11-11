@@ -11,7 +11,11 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "provision:factory": "tsx ../scripts/provision-factory.ts"
+    "provision:factory": "tsx scripts/provision-factory.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "setup": "node scripts/setup.mjs",
+    "verify": "npm run format:check && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",
@@ -39,6 +43,10 @@
     "vitest": "^5.1.0",
     "@types/node": "^24.0.0",
     "@types/express": "^5.0.3",
-    "@types/cookie-parser": "^1.4.9"
+    "@types/cookie-parser": "^1.4.9",
+    "prettier": "^3.9.10"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }

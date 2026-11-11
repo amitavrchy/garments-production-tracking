@@ -1,3 +1,4 @@
+name: garments-production-tracking
 services:
   postgres:
     image: postgres:17-alpine

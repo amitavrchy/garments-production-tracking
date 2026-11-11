@@ -16,3 +16,6 @@ artifacts/
 playwright-report/
 test-results/
 frontend/next-env.d.ts
+
+.cache/
+next-env.d.ts
