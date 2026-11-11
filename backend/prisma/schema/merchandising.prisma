@@ -1,0 +1,76 @@
+model Buyer {
+  id String @id @default(cuid())
+  factoryId String
+  name String
+  code String
+  email String @default("")
+  @@unique([factoryId, code])
+}
+model Style {
+  id String @id @default(cuid())
+  factoryId String
+  code String
+  name String
+  smv Float
+  status String @default("DRAFT")
+  @@unique([factoryId, code])
+}
+model BomItem {
+  id String @id @default(cuid())
+  factoryId String
+  styleId String
+  itemType String
+  description String
+  consumptionPerPc Float
+  wastageBps Int @default(0)
+  uom String
+}
+model Operation {
+  id String @id @default(cuid())
+  factoryId String
+  styleId String
+  seq Int
+  name String
+  smv Float
+  pieceRateMinor Int
+  machineType String @default("SNLS")
+  @@unique([styleId, seq])
+}
+model BuyerOrder {
+  id String @id @default(cuid())
+  factoryId String
+  buyerId String
+  styleId String
+  poNumber String
+  status String @default("DRAFT")
+  deliveryDate String
+  createdAt DateTime @default(now())
+  @@unique([factoryId, buyerId, poNumber])
+}
+model OrderQuantity {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  color String
+  size String
+  qty Int
+  @@unique([orderId, color, size])
+}
+model Milestone {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  name String
+  dueDate String
+  completed Boolean @default(false)
+}
+model MaterialMovement {
+  id String @id @default(cuid())
+  factoryId String
+  bomItemId String
+  orderId String
+  kind String
+  qty Float
+  reference String
+  date String
+}
