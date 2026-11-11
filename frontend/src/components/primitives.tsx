@@ -12,11 +12,40 @@ export function Badge({ value }: { value: string }) {
     'SHIPPED',
     'CLOSED',
     'BULLETIN_READY',
+    'PASSED',
+    'PASS',
+    'VERIFIED',
+    'AVAILABLE',
+    'LOW',
   ].includes(value)
     ? 'green'
-    : ['CANCELLED', 'ARCHIVED', 'MAINTENANCE'].includes(value)
+    : [
+          'CANCELLED',
+          'ARCHIVED',
+          'MAINTENANCE',
+          'FAILED',
+          'FAIL',
+          'REJECTED',
+          'CRITICAL',
+          'HIGH',
+        ].includes(value)
       ? 'red'
-      : ['IN_PRODUCTION', 'CUTTING', 'CALCULATED', 'PACKED', 'BOM_READY'].includes(value)
+      : [
+            'IN_PRODUCTION',
+            'CUTTING',
+            'CALCULATED',
+            'PACKED',
+            'BOM_READY',
+            'SUBMITTED',
+            'REVIEW',
+            'IN_PROGRESS',
+            'SIMULATED',
+            'SEWING',
+            'QC',
+            'HOLD',
+            'MEDIUM',
+            'NORMAL',
+          ].includes(value)
         ? 'orange'
         : 'neutral';
   return (

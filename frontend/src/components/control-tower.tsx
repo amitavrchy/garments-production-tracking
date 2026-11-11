@@ -108,7 +108,7 @@ export function ControlTower() {
         <TowerMetric
           Icon={Users}
           label="Present / recorded"
-          value={`${r.workforce.present} / ${r.workforce.present + r.workforce.absent}`}
+          value={`${r.workforce.present} / ${r.workforce.recorded}`}
           detail={`${number(r.workforce.overtimeMinutes)} overtime minutes`}
         />
         <TowerMetric

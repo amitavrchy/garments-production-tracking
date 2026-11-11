@@ -8,6 +8,9 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     timeout-minutes: 20
     services:
       postgres:
@@ -41,30 +44,45 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
       - run: npm ci
+      - run: npm ci
+        working-directory: frontend
       - run: npm run db:generate
       - run: npm run db:migrate
       - run: npm run db:seed
       - run: npm run format:check
+      - run: npm run format:check
+        working-directory: frontend
       - run: npm run typecheck
+      - run: npm run typecheck
+        working-directory: frontend
       - run: npm test
       - run: npm audit --audit-level=moderate
+      - run: npm audit --audit-level=moderate
+        working-directory: frontend
       - run: npm run build
+      - run: npm run build
+        working-directory: frontend
       - run: npx playwright install --with-deps chromium
+        working-directory: frontend
       - name: Start production servers
         run: |
-          npm run start -w backend > api.log 2>&1 &
-          npm run start -w frontend > web.log 2>&1 &
+          npm run start > api.log 2>&1 &
+          npm --prefix ../frontend run start > web.log 2>&1 &
           curl --retry 30 --retry-connrefused --retry-delay 1 -fsS http://localhost:4400/api/health
           curl --retry 30 --retry-connrefused --retry-delay 1 -fsS http://localhost:3300 > /dev/null
       - run: npm run test:e2e
+        working-directory: frontend
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: verification-artifacts
           path: |
-            playwright-report/
-            test-results/
-            artifacts/
-            api.log
-            web.log
+            frontend/playwright-report/
+            frontend/test-results/
+            frontend/artifacts/
+            backend/api.log
+            backend/web.log

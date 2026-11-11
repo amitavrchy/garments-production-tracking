@@ -56,8 +56,12 @@ export class OperationsController {
   @Delete(roots.map((r) => `${r}/:id`)) async remove(@Req() req: Request, @Param('id') id: string) {
     return this.domain.remove(await this.actor(req), this.resource(req), id);
   }
-  @Post('production/hourly') async hourly(@Req() req: Request, @Body() body: unknown,@Headers('idempotency-key')key?:string) {
-    return this.domain.write(await this.actor(req), 'production', body,undefined,key);
+  @Post('production/hourly') async hourly(
+    @Req() req: Request,
+    @Body() body: unknown,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    return this.domain.write(await this.actor(req), 'production', body, undefined, key);
   }
   @Get('production/efficiency') async efficiency(
     @Req() req: Request,

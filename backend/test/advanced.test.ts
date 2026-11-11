@@ -522,4 +522,97 @@ suite('advanced transactional manufacturing workflows', () => {
     expect(await db.buyer.count({ where: { factoryId, code: 'IMPORT-NEW' } })).toBe(0);
     await expect(advanced.importMasters(qc, 'buyers', [])).rejects.toThrow('administrators');
   });
+  it('locks started allocations and detects stale drag/drop updates', async () => {
+    const started = await db.allocation.findFirstOrThrow({ where: { factoryId, lineId, date } });
+    await expect(
+      domain.write(
+        admin,
+        'allocations',
+        {
+          lineId,
+          orderId,
+          date: future(30),
+          target: started.target,
+          expectedVersion: started.version,
+        },
+        started.id,
+      ),
+    ).rejects.toThrow('after production');
+    const free = await create('allocations', { lineId, orderId, date: future(30), target: 1 });
+    const updated = (
+      await domain.write(
+        admin,
+        'allocations',
+        { lineId, orderId, date: future(31), target: 1, expectedVersion: free.version },
+        free.id,
+      )
+    ).record;
+    expect(updated.version).toBe(2);
+    await expect(
+      domain.write(
+        admin,
+        'allocations',
+        { lineId, orderId, date: future(32), target: 1, expectedVersion: free.version },
+        free.id,
+      ),
+    ).rejects.toThrow('changed since');
+    await domain.remove(admin, 'allocations', free.id);
+  });
+  it('editing a simulated scenario invalidates the previous proposal', async () => {
+    let scenario = await create('scenarios', {
+      name: 'Editable what-if',
+      startDate: future(40),
+      days: 2,
+      efficiency: 80,
+      overtimeMinutes: 0,
+      operatorsOverride: 0,
+    });
+    scenario = await act('scenarios', scenario, 'SIMULATED');
+    scenario = (
+      await domain.write(
+        admin,
+        'scenarios',
+        {
+          name: scenario.name,
+          startDate: scenario.startDate,
+          days: 2,
+          efficiency: 90,
+          overtimeMinutes: 30,
+          operatorsOverride: 0,
+          expectedVersion: scenario.version,
+        },
+        scenario.id,
+      )
+    ).record;
+    expect(scenario.status).toBe('DRAFT');
+    expect(scenario.result).toBeNull();
+  });
+  it('reports good-output yield independently of defect occurrences', async () => {
+    await create('downtime', {
+      lineId,
+      machineId,
+      date,
+      minutes: 30,
+      category: 'BREAKDOWN',
+      reason: 'Needle reset',
+    });
+    await create('qc', {
+      orderId,
+      lineId,
+      color: 'Navy',
+      size: 'M',
+      inspectedPcs: 10,
+      defectCode: 'STITCH',
+      defectCount: 2,
+      reworkPcs: 0,
+      rejectedPcs: 1,
+      date,
+    });
+    const r = await advanced.insights(admin, date),
+      line = r.equipment.find((l) => l.id === lineId)!;
+    expect(line.availability).toBe(93.75);
+    expect(line.quality).toBeCloseTo(99.666666);
+    expect(line.dhu).toBe(20);
+    expect(r.workforce.recorded).toBe(1);
+  });
 });

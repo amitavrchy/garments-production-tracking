@@ -15,7 +15,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "setup": "node scripts/setup.mjs",
-    "verify": "npm run format:check && npm run typecheck && npm test && npm run build"
+    "verify": "npm run format:check && npm run typecheck && npm test && npm run build",
+    "audit": "npm audit --audit-level=moderate",
+    "dev:all": "node scripts/dev-all.mjs",
+    "start:all": "node scripts/dev-all.mjs --production",
+    "verify:all": "node scripts/verify-all.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",

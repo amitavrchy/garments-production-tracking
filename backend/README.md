@@ -2,19 +2,24 @@
 
 A connected production floor for Bangladesh RMG factories: buyer orders → style/BOM → cutting → hourly sewing → QC/rework → finishing → packing → shipment, with operation-based worker payroll.
 
-![Production overview](docs/screenshots/overview-desktop.png)
+![Loom landing page](docs/screenshots/landing-hero.png)
 
 ## Start locally
 
 Requires Node.js **22.12+** (24 recommended) and Docker Desktop running Linux containers.
 
+From the repository root (no root npm package is required):
+
 ```sh
-npm ci
-npm run setup
-npm run dev
+npm --prefix backend ci
+npm --prefix frontend ci
+npm --prefix backend run setup
+npm --prefix backend run dev:all
 ```
 
-Open **http://localhost:3300**. API: `http://localhost:4400/api`. PostgreSQL/Redis use dedicated local ports **55432/56379**.
+The root contains only `frontend/` and `backend/`, apart from Git's `.git` metadata. Each application has its own package, lockfile, configuration and dependencies. Scripts, Compose, docs, the original specification and CI template live inside `backend`; browser tests and public UI live inside `frontend`.
+
+Open **http://localhost:3300** for the public landing page and **http://localhost:3300/workspace** for the application. API: `http://localhost:4400/api`. PostgreSQL/Redis use dedicated local ports **55432/56379**.
 
 Setup creates ignored environment files if absent, generates a random JWT secret, starts persistent services, applies migrations, and seeds data. It preserves existing files/data and is safe to rerun.
 
@@ -30,6 +35,8 @@ Local accounts share `SEED_ADMIN_PASSWORD` from `backend/.env` (example: `Change
 The seed includes one factory, four lines, a complete style/BOM/bulletin, three POs, twelve workers, production/QC/material records, and draft payroll. Use individual accounts and new secrets for deployment.
 
 ## Workspaces
+
+The advanced suite adds a control tower, approval desk and **17 operational resources**. See [advanced workflows and rules](docs/advanced-suite.md) for the full feature map.
 
 | Workspace         | Features                                                                                   |
 | ----------------- | ------------------------------------------------------------------------------------------ |
@@ -63,6 +70,8 @@ Select table records to view, edit eligible fields, or advance status. Active BO
 
 ## Verification
 
+Run these commands inside `backend`; `npm run verify:all` checks both projects, including database tests, builds and audits.
+
 ```sh
 npm run typecheck
 npm test
@@ -86,14 +95,14 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-If Windows restricts downloaded binaries, use installed Edge: `$env:PLAYWRIGHT_CHANNEL='msedge'`. GitHub Actions verifies migrations, types, formulas, concurrent writes, WIP, payroll, permissions, production builds, and browser workflows; reports/screenshots are retained as artifacts.
+Run browser commands inside `frontend`. On Windows where downloaded binaries are restricted, use installed Edge: `$env:PLAYWRIGHT_CHANNEL='msedge'`. Run `npm run verify:all` inside `backend` to check both independent projects. The CI template is in `backend/ci/workflows/ci.yml`. Automatic GitHub discovery requires a root `.github/workflows` directory, which is intentionally absent under the requested two-folder layout; the template is available for a runner or future hosting configuration.
 
 ## Engineering
 
-Next.js App Router + React, NestJS, Prisma 7/PostgreSQL 17, Redis 7/BullMQ, and authenticated Socket.IO. [Architecture/API](docs/architecture.md) · [Deployment](docs/deployment.md) · [Original specification](Project_spec.md).
+Next.js App Router + React, NestJS, Prisma 7/PostgreSQL 17, Redis 7/BullMQ, and authenticated Socket.IO. [Architecture/API](docs/architecture.md) · [Advanced suite](docs/advanced-suite.md) · [Deployment](docs/deployment.md) · [Original specification](docs/Project_spec.md).
 
 PostgreSQL is authoritative. Tenant foreign keys, unique slots, checks and factory transaction locks protect writes; audits share the transaction. Redis stores nightly Dhaka-time report/bulletin caches. Live metrics and delivery risks derive from current records.
 
-Implementation boundaries: operation-based piece rates, explicit worker assignment hours, basic lays, invoice references and packing-list CSVs. CAD, finance/GL, customs/EDI, SMS/email, bundle scanning, automatic Redis counter flushing and subcontract settlement are not integrated. Payroll calculation is synchronous. Lists load up to 10,000 rows/resource; larger deployments need server pagination and report projections.
+The release includes operation-based payroll, independent approvals, capacity scenarios, lot inventory, QR bundle passports, final sampling/CAPA, cost sheets, subcontract WIP, invoice/packing documents, resource tracking and an offline production outbox. It does not claim every capability of every commercial ERP/MES: CAD nesting, certified sampling tables, finance/GL, external customs/EDI/SMS/email, RFID hardware and external AI services are not connected. OEE and emissions are transparent estimates. Payroll calculation is synchronous. Lists load up to 10,000 rows/resource; larger deployments need server pagination and report projections.
 
 Commits use the verified `amitavrchy` GitHub noreply identity and real dates. The original specification is preserved.

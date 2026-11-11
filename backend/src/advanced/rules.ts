@@ -40,7 +40,12 @@ export async function prepareAdvanced(
     version: (before?.version || 0) + 1,
     ...(!before ? { createdBy: actor.id } : {}),
   };
-  if(resource==='scenarios'&&before){result.status='DRAFT';result.result=Prisma.JsonNull;}
+  if (resource === 'scenarios' && before) {
+    result.status = 'DRAFT';
+    result.result = Prisma.JsonNull;
+  }
+  if (resource === 'subcontracts')
+    requireThat(data.receivedQty === 0, 'Record good returns when receiving the dispatched job');
   if (resource === 'purchases') {
     requireThat(
       data.currency !== 'BDT' || data.exchangeRate === 1,
@@ -57,7 +62,10 @@ export async function prepareAdvanced(
       'Only store users can receive stock',
     );
     requireThat(!before, 'Stock lots are immutable after receipt; use issue/return movements');
-    requireThat(actor.role==='FACTORY_ADMIN'||data.testResult==='HOLD','Store receipts must enter quality hold before QC clearance');
+    requireThat(
+      actor.role === 'FACTORY_ADMIN' || data.testResult === 'HOLD',
+      'Store receipts must enter quality hold before QC clearance',
+    );
     await tx.materialMovement.create({
       data: {
         factoryId: actor.factoryId,
@@ -97,7 +105,10 @@ export async function prepareAdvanced(
     await validateMaterials(tx, actor, data.orderId);
   }
   if (resource === 'bundles') {
-    requireThat(['FACTORY_ADMIN','LINE_CHIEF','SUPERVISOR'].includes(actor.role),'Only production roles can generate bundle tickets');
+    requireThat(
+      ['FACTORY_ADMIN', 'LINE_CHIEF', 'SUPERVISOR'].includes(actor.role),
+      'Only production roles can generate bundle tickets',
+    );
     const cut = await record(tx, actor, 'cutting', data.cuttingId);
     requireThat(cut.status === 'COMPLETED', 'Complete the cutting lay before generating tickets');
     const used = await tx.bundle.aggregate({ where: { cuttingId: cut.id }, _sum: { qty: true } });
@@ -331,7 +342,10 @@ export async function advancedAction(
         before.packingMinor +
         before.freightMinor;
       extra.marginPercent = ((before.sellingMinor - extra.totalMinor) / before.sellingMinor) * 100;
-      requireThat(Number.isSafeInteger(extra.totalMinor)&&extra.totalMinor<=2147483647,'Calculated cost exceeds the supported poisha amount. Review prices and consumption.');
+      requireThat(
+        Number.isSafeInteger(extra.totalMinor) && extra.totalMinor <= 2147483647,
+        'Calculated cost exceeds the supported poisha amount. Review prices and consumption.',
+      );
       extra.breakdown = breakdown;
     }
     if (next === 'APPROVED') {
@@ -366,9 +380,17 @@ export async function advancedAction(
       });
     }
   }
-  if(resource==='bundles'&&actor.role!=='FACTORY_ADMIN'){
-    const roles=next==='PACKED'?['SHIPPING']:['FINISHING','HOLD'].includes(next)||before.status==='HOLD'?['QC']:['LINE_CHIEF','SUPERVISOR','QC'];
-    requireThat(roles.includes(actor.role),'This checkpoint requires a different operational role');
+  if (resource === 'bundles' && actor.role !== 'FACTORY_ADMIN') {
+    const roles =
+      next === 'PACKED'
+        ? ['SHIPPING']
+        : ['FINISHING', 'HOLD'].includes(next) || before.status === 'HOLD'
+          ? ['QC']
+          : ['LINE_CHIEF', 'SUPERVISOR', 'QC'];
+    requireThat(
+      roles.includes(actor.role),
+      'This checkpoint requires a different operational role',
+    );
   }
   if (resource === 'bundles')
     await tx.bundleEvent.create({

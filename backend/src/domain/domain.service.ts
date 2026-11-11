@@ -220,9 +220,9 @@ export class DomainService {
           'DRAFT',
           'PLANNED',
           ...(isAdvanced(resource) ? ['OPEN'] : []),
-          ...(['maintenance','correctiveActions'].includes(resource)?['IN_PROGRESS']:[]),
-          ...(resource==='compliance'?['FAILED']:[]),
-          ...(resource==='scenarios'?['SIMULATED']:[]),
+          ...(['maintenance', 'correctiveActions'].includes(resource) ? ['IN_PROGRESS'] : []),
+          ...(resource === 'compliance' ? ['FAILED'] : []),
+          ...(resource === 'scenarios' ? ['SIMULATED'] : []),
         ].includes(before.status),
         'Only draft or planned records can be edited',
       );

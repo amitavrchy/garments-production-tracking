@@ -69,7 +69,13 @@ export function ResourceWorkspace({ module }: { module: string }) {
     );
   const rc = configs[resource],
     writable = canWrite(user?.role || '', resource);
-  const creatable = writable && !(resource === 'lots' && user?.role === 'QC') && !(resource==='bundles'&&!['FACTORY_ADMIN','LINE_CHIEF','SUPERVISOR'].includes(user?.role||''));
+  const creatable =
+    writable &&
+    !(resource === 'lots' && user?.role === 'QC') &&
+    !(
+      resource === 'bundles' &&
+      !['FACTORY_ADMIN', 'LINE_CHIEF', 'SUPERVISOR'].includes(user?.role || '')
+    );
   const rows = (data[resource] || []).filter(
     (row) =>
       (status === 'ALL' || row.status === status) &&
@@ -88,7 +94,15 @@ export function ResourceWorkspace({ module }: { module: string }) {
   );
   const paginated = rows.slice(page * 12, page * 12 + 12);
   const display = (row: Row, key: string) => {
-    if (key === 'status') return <Badge value={row[key]} />;
+    if (['status', 'testResult', 'priority', 'severity'].includes(key))
+      return <Badge value={row[key]} />;
+    if (key === 'evidenceUrl' && /^https?:\/\//.test(row[key] || ''))
+      return (
+        <a className="text-link" href={row[key]} target="_blank" rel="noopener noreferrer">
+          Open evidence
+          <ArrowUpRight size={15} />
+        </a>
+      );
     const field = rc.fields.find((f) => f.key === key);
     if (field?.ref) return workspace.label(field.ref, row[key]);
     if (key === 'unitCostMinor' && row.currency && row.currency !== 'BDT')
@@ -103,6 +117,15 @@ export function ResourceWorkspace({ module }: { module: string }) {
     return row[key] ?? '—';
   };
   const header = (key: string) =>
+    (resource === 'costing'
+      ? (
+          {
+            totalMinor: 'Unit cost · BDT',
+            materialMinor: 'Material / pc',
+            marginPercent: 'Quoted margin',
+          } as Record<string, string>
+        )[key]
+      : undefined) ||
     rc.fields.find((f) => f.key === key)?.label ||
     (
       {
@@ -404,6 +427,23 @@ export function ResourceWorkspace({ module }: { module: string }) {
               ))}
             </dl>
             <AdvancedRecordDetails resource={resource} record={selected} />
+            {resource === 'subcontracts' && selected.status === 'SENT' && writable && (
+              <label className="receipt-input">
+                Actual good pieces received
+                <input
+                  type="number"
+                  min={1}
+                  max={selected.qty}
+                  value={selected.receiveDraft ?? selected.qty}
+                  onChange={(e) =>
+                    setSelected({ ...selected, receiveDraft: Number(e.target.value) })
+                  }
+                />
+                <span className="field-hint">
+                  A partial good return is allowed. Unreturned pieces remain visible in WIP.
+                </span>
+              </label>
+            )}
             {resource === 'payroll' && selected.breakdown && (
               <div className="table-scroll">
                 <table>
@@ -429,9 +469,16 @@ export function ResourceWorkspace({ module }: { module: string }) {
             {writable && (
               <div className="detail-actions">
                 {(!selected.status ||
-                  ['DRAFT', 'PLANNED', 'OPEN',...(['maintenance','correctiveActions'].includes(resource)?['IN_PROGRESS']:[]),...(resource==='compliance'?['FAILED']:[]),...(resource==='scenarios'?['SIMULATED']:[])].includes(
-                    selected.status,
-                  )) &&
+                  [
+                    'DRAFT',
+                    'PLANNED',
+                    'OPEN',
+                    ...(['maintenance', 'correctiveActions'].includes(resource)
+                      ? ['IN_PROGRESS']
+                      : []),
+                    ...(resource === 'compliance' ? ['FAILED'] : []),
+                    ...(resource === 'scenarios' ? ['SIMULATED'] : []),
+                  ].includes(selected.status)) &&
                   !['lots', 'lotIssues', 'bundles'].includes(resource) && (
                     <button
                       className="button"
@@ -449,7 +496,14 @@ export function ResourceWorkspace({ module }: { module: string }) {
                     className={`button ${state === 'CANCELLED' ? 'danger' : 'primary'}`}
                     key={state}
                     disabled={busy}
-                    onClick={() => action({ status: state })}
+                    onClick={() =>
+                      action({
+                        status: state,
+                        ...(resource === 'subcontracts' && state === 'RECEIVED'
+                          ? { receivedQty: selected.receiveDraft ?? selected.qty }
+                          : {}),
+                      })
+                    }
                   >
                     {busy ? 'Updating…' : `Move to ${title(state)}`}
                   </button>

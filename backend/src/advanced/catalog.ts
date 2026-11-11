@@ -173,7 +173,7 @@ export const advancedSchemas = {
       color: text,
       size: text,
       qty,
-      receivedQty: integer,
+      receivedQty: integer.default(0),
       sentDate: date,
       dueDate: date,
     })

@@ -423,6 +423,9 @@ export const advancedPermissions: Record<string, string[]> = {
   sustainability: ['STORE', 'IE'],
 };
 
+advancedConfigs.subcontracts.fields = advancedConfigs.subcontracts.fields.filter(
+  (field) => field.key !== 'receivedQty',
+);
 for (const config of Object.values(advancedConfigs))
   for (const field of config.fields)
     if (

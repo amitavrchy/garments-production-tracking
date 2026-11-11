@@ -1197,3 +1197,13 @@
     break-inside: avoid;
   }
 }
+
+.receipt-input {
+  max-width: 370px;
+  margin: 18px 0;
+  font-size: 14px;
+  color: #627c4f;
+}
+.receipt-input input {
+  max-width: 240px;
+}

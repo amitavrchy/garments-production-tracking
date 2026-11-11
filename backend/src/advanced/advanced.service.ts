@@ -1,5 +1,5 @@
 import { Inject, Injectable, ForbiddenException, ConflictException } from '@nestjs/common';
-import {Prisma} from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { ReportsService } from '../reports.service';
 import { Actor } from '../auth/permissions';
@@ -102,7 +102,13 @@ export class AdvancedService {
       stock: {
         lots: lots.length,
         held: lots.filter((l) => l.testResult !== 'PASS').length,
-        byUnit: Object.entries(lots.reduce((out:Record<string,number>,lot)=>{const unit=bom.find(b=>b.id===lot.bomItemId)?.uom||'unknown';out[unit]=(out[unit]||0)+lot.qty-lot.issuedQty;return out;},{})).map(([uom,qty])=>({uom,qty})),
+        byUnit: Object.entries(
+          lots.reduce((out: Record<string, number>, lot) => {
+            const unit = bom.find((b) => b.id === lot.bomItemId)?.uom || 'unknown';
+            out[unit] = (out[unit] || 0) + lot.qty - lot.issuedQty;
+            return out;
+          }, {}),
+        ).map(([uom, qty]) => ({ uom, qty })),
         byWarehouse: Object.entries(
           lots.reduce(
             (out: Record<string, number>, l) => ({
@@ -130,6 +136,8 @@ export class AdvancedService {
         overdue: maintenance.filter((m) => m.status !== 'COMPLETED' && m.dueDate < date).length,
       },
       workforce: {
+        recorded: attendance.length,
+        onLeave: attendance.filter((a) => a.status === 'LEAVE').length,
         present: attendance.filter((a) => a.status === 'PRESENT').length,
         absent: attendance.filter((a) => a.status === 'ABSENT').length,
         overtimeMinutes: sum(attendance, (a) => a.overtimeMinutes),
@@ -179,7 +187,7 @@ export class AdvancedService {
     });
     if (!allocation) return { line, allocation: null, operations: [], recommendations: [] };
     const order = await record(this.db, actor, 'orders', allocation.orderId);
-    const [ops, stations, skills, workers, assignments] = await Promise.all([
+    const [ops, stations, skills, workers, assignments, attendance] = await Promise.all([
       this.db.operation.findMany({ where: { styleId: order.styleId }, orderBy: { seq: 'asc' } }),
       this.db.stationPlan.findMany({ where: { lineId, date } }),
       this.db.workerSkill.findMany({
@@ -187,6 +195,9 @@ export class AdvancedService {
       }),
       this.db.worker.findMany({ where: { factoryId: actor.factoryId } }),
       this.db.lineAssignment.findMany({ where: { factoryId: actor.factoryId, date } }),
+      this.db.attendance.findMany({
+        where: { factoryId: actor.factoryId, date, status: { in: ['ABSENT', 'LEAVE'] } },
+      }),
     ]);
     const balanced = stationBalance(
       ops,
@@ -199,7 +210,12 @@ export class AdvancedService {
       operationId: op.id,
       operation: op.name,
       workers: skills
-        .filter((s) => s.operationId === op.id && s.level >= 3)
+        .filter(
+          (s) =>
+            s.operationId === op.id &&
+            s.level >= 3 &&
+            !attendance.some((a) => a.workerId === s.workerId),
+        )
         .filter(
           (s) =>
             !assignments.some(
@@ -335,20 +351,28 @@ export class AdvancedService {
       );
       return p.data;
     });
-    return this.db.atomic(actor.factoryId, async (tx) => {
-      const model =
-        resource === 'buyers' ? tx.buyer : resource === 'workers' ? tx.worker : tx.supplier;
-      for (const data of parsed) {
-        const row = await (model as any).create({
-          data: {
-            ...data,
-            factoryId: actor.factoryId,
-            ...(resource === 'suppliers' ? { createdBy: actor.id } : {}),
-          },
-        });
-        await audit(tx, actor, resource, row.id, 'IMPORT', null, row);
-      }
-      return { imported: parsed.length };
-    }).catch(error=>{if(error instanceof Prisma.PrismaClientKnownRequestError&&error.code==='P2002')throw new ConflictException('A duplicate reference was found. No import rows were saved.');throw error;});
+    return this.db
+      .atomic(actor.factoryId, async (tx) => {
+        const model =
+          resource === 'buyers' ? tx.buyer : resource === 'workers' ? tx.worker : tx.supplier;
+        for (const data of parsed) {
+          const row = await (model as any).create({
+            data: {
+              ...data,
+              factoryId: actor.factoryId,
+              ...(resource === 'suppliers' ? { createdBy: actor.id } : {}),
+            },
+          });
+          await audit(tx, actor, resource, row.id, 'IMPORT', null, row);
+        }
+        return { imported: parsed.length };
+      })
+      .catch((error) => {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')
+          throw new ConflictException(
+            'A duplicate reference was found. No import rows were saved.',
+          );
+        throw error;
+      });
   }
 }

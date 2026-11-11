@@ -43,6 +43,8 @@ test('public landing has a working product tour, workflow explorer, FAQ and capa
     ),
   ).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: 'artifacts/landing-hero.png', animations: 'disabled' });
   await page.screenshot({
     path: 'artifacts/landing-desktop.png',
     fullPage: true,
@@ -60,24 +62,22 @@ test('landing mobile menu, text sizing and overflow are correct', async ({ page 
     .click();
   await expect(page.getByRole('button', { name: 'Open menu' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  const small = await page
-    .locator('.landing *')
-    .evaluateAll((nodes) =>
-      nodes
-        .filter(
-          (n) =>
-            n instanceof HTMLElement &&
-            n.getBoundingClientRect().width &&
-            getComputedStyle(n).visibility !== 'hidden' &&
-            [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent?.trim()) &&
-            parseFloat(getComputedStyle(n).fontSize) < 14,
-        )
-        .map((n) => ({
-          tag: n.tagName,
-          text: n.textContent?.slice(0, 40),
-          font: getComputedStyle(n).fontSize,
-        })),
-    );
+  const small = await page.locator('.landing *').evaluateAll((nodes) =>
+    nodes
+      .filter(
+        (n) =>
+          n instanceof HTMLElement &&
+          n.getBoundingClientRect().width &&
+          getComputedStyle(n).visibility !== 'hidden' &&
+          [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent?.trim()) &&
+          parseFloat(getComputedStyle(n).fontSize) < 14,
+      )
+      .map((n) => ({
+        tag: n.tagName,
+        text: n.textContent?.slice(0, 40),
+        font: getComputedStyle(n).fontSize,
+      })),
+  );
   expect(small).toEqual([]);
   await page.screenshot({
     path: 'artifacts/landing-mobile.png',
@@ -155,7 +155,7 @@ test('quoted cost reconciliation can be independently approved for commercial do
   await page.getByRole('button', { name: 'Close dialog' }).click();
   await signIn(page, 'accounts@loom.local');
   await page.goto('/approvals');
-  await expect(page.getByRole('heading',{name:'Approval desk.',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Approval desk.', exact: true })).toBeVisible();
   const cost = page
     .locator('.approval-card')
     .filter({ has: page.getByRole('heading', { name: 'November cost revision', exact: true }) });
@@ -175,15 +175,13 @@ test('master CSV import previews quoted fields and persists atomically', async (
   await page.getByRole('tab', { name: /Suppliers/ }).click();
   await page.getByRole('button', { name: 'Import CSV', exact: true }).click();
   const code = `CSV-${Date.now()}`;
-  await page
-    .getByLabel('Master CSV file')
-    .setInputFiles({
-      name: 'suppliers.csv',
-      mimeType: 'text/csv',
-      buffer: Buffer.from(
-        `code,name,email,country,paymentTerms\r\n${code},"Browser, supplier",browser@example.com,Bangladesh,Net 30\r\n`,
-      ),
-    });
+  await page.getByLabel('Master CSV file').setInputFiles({
+    name: 'suppliers.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      `code,name,email,country,paymentTerms\r\n${code},"Browser, supplier",browser@example.com,Bangladesh,Net 30\r\n`,
+    ),
+  });
   await expect(
     page.getByRole('dialog').getByText('Browser, supplier', { exact: true }),
   ).toBeVisible();

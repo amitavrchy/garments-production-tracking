@@ -9,7 +9,7 @@ flowchart LR
   Jobs --> Redis[(Report / bulletin cache)]
 ```
 
-`frontend/src/lib` declares module forms and role controls. `backend/src/domain` validates input, references, lifecycle, WIP and payroll. Mutations run under a PostgreSQL factory advisory lock; tenant foreign keys, unique slots and checks provide additional integrity. The session determines factory/audit actor and the bulletin determines piece rates.
+`frontend/src/lib` declares module forms and role controls. `backend/src/domain` validates input, references, lifecycle, WIP and payroll. `backend/src/advanced` adds planning, stock, quality/commercial controls and operational intelligence. Mutations run under a PostgreSQL factory advisory lock; tenant foreign keys, unique slots and checks provide additional integrity. The session determines factory/audit actor and the bulletin determines piece rates. See [advanced suite](advanced-suite.md) for the additional API and rules.
 
 Use migrations rather than `db push`: custom SQL migrations contain tenant foreign keys and checks.
 

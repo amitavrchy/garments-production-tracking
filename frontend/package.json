@@ -9,7 +9,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "audit": "npm audit --audit-level=moderate"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
