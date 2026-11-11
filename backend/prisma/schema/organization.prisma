@@ -1,0 +1,67 @@
+model Factory {
+  id String @id @default(cuid())
+  name String
+  timezone String @default("Asia/Dhaka")
+}
+model Floor {
+  id String @id @default(cuid())
+  factoryId String
+  name String
+  @@unique([factoryId, name])
+}
+model Line {
+  id String @id @default(cuid())
+  factoryId String
+  floorId String
+  code String
+  targetManpower Int @default(30)
+  @@unique([factoryId, code])
+}
+model Machine {
+  id String @id @default(cuid())
+  factoryId String
+  lineId String
+  code String
+  type String
+  status String @default("ACTIVE")
+  @@unique([factoryId, code])
+}
+model Worker {
+  id String @id @default(cuid())
+  factoryId String
+  employeeCode String
+  name String
+  skillGrade String @default("B")
+  @@unique([factoryId, employeeCode])
+}
+model LineAssignment {
+  id String @id @default(cuid())
+  factoryId String
+  lineId String
+  workerId String
+  date String
+  hours Float @default(8)
+  @@unique([workerId, date, lineId])
+}
+model User {
+  id String @id @default(cuid())
+  factoryId String
+  email String @unique
+  name String
+  passwordHash String
+  role String
+  lineIds String[] @default([])
+  active Boolean @default(true)
+}
+model AuditLog {
+  id String @id @default(cuid())
+  factoryId String
+  actorId String
+  action String
+  resource String
+  recordId String
+  before Json?
+  after Json?
+  at DateTime @default(now())
+  @@index([factoryId, at])
+}
