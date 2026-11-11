@@ -32,6 +32,7 @@ model HourlyProduction {
   operators Int
   availableMinutes Int @default(60)
   enteredBy String
+  breakdown Json?
   version Int @default(1)
   @@unique([lineId, date, hourStart])
 }

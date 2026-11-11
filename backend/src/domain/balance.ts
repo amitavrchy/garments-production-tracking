@@ -10,12 +10,13 @@ export async function balances(tx: Prisma.TransactionClient, actor: Actor, order
     tx.hourlyProduction.findMany({where}),tx.qcInspection.findMany({where}),tx.finishingRecord.findMany({where}),
     tx.packingCarton.findMany({where}),tx.shipment.findMany({where}),
   ]);
+  const detailed=production.flatMap(p=>Array.isArray(p.breakdown)?(p.breakdown as {color:string;size:string;inputPcs:number;producedPcs:number}[]).map(b=>({...p,...b})):[p]);
   const dispatched = new Set(shipments.filter(s=>['DISPATCHED','DELIVERED'].includes(s.status)).map(s=>s.id));
   return quantities.map(q=>{
     const match = (r: {orderId:string;color:string;size:string})=>r.orderId===q.orderId&&r.color===q.color&&r.size===q.size;
     const cut = sum(cutting.filter(match),r=>r.qty);
-    const input = sum(production.filter(match),r=>r.inputPcs);
-    const sewn = sum(production.filter(match),r=>r.producedPcs);
+    const input = sum(detailed.filter(match),r=>r.inputPcs);
+    const sewn = sum(detailed.filter(match),r=>r.producedPcs);
     const rejected = sum(qc.filter(match),r=>r.rejectedPcs);
     const rework = sum(qc.filter(match),r=>r.reworkPcs-r.resolvedPcs);
     const inspected = sum(qc.filter(match),r=>r.inspectedPcs);

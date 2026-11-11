@@ -19,7 +19,7 @@ export async function checkReferences(tx: Prisma.TransactionClient, actor: Actor
   if(data.orderId) {
     const order = await record(tx,actor,'orders',data.orderId);
     if(!['quantities','milestones','shipments'].includes(resource)) requireThat(!['DRAFT','CANCELLED','CLOSED','SHIPPED'].includes(order.status), 'Order must be confirmed and open for production');
-    if(data.color && data.size) requireThat(await tx.orderQuantity.findFirst({where:{orderId:order.id,color:data.color,size:data.size}}), 'Color and size must match the order breakdown');
+    if(data.color && data.size && resource!=='quantities') requireThat(await tx.orderQuantity.findFirst({where:{orderId:order.id,color:data.color,...(resource==='production'&&data.size==='AUTO'?{}:{size:data.size})}}), 'Color and size must match the order breakdown');
     if(resource==='materials') requireThat((await record(tx,actor,'bom',data.bomItemId)).styleId===order.styleId,'Material must belong to the order style');
     if(resource==='pieceEntries') requireThat((await record(tx,actor,'operations',data.operationId)).styleId===order.styleId,'Operation must belong to the order style');
     if(resource==='cartons') {
@@ -29,8 +29,21 @@ export async function checkReferences(tx: Prisma.TransactionClient, actor: Actor
     }
     if(resource==='production') requireThat(await tx.allocation.findFirst({where:{lineId:data.lineId,orderId:data.orderId,date:data.date}}),'Allocate this order to the line and date before entering production');
   }
+  if(['bom','operations'].includes(resource)) requireThat(!['ACTIVE','ARCHIVED'].includes((await record(tx,actor,'styles',data.styleId)).status),'Active style BOM and bulletin are locked. Create a draft style revision.');
+  if(resource==='quantities') {
+    const order=await record(tx,actor,'orders',data.orderId);
+    requireThat(!['CANCELLED','CLOSED','SHIPPED'].includes(order.status),'Order is closed');
+  }
 }
 export async function checkDelete(tx:Prisma.TransactionClient,actor:Actor,resource:Resource,id:string) {
+  if(resource==='quantities') {
+    const q=await record(tx,actor,resource,id);
+    requireThat(!await tx.cuttingRecord.count({where:{orderId:q.orderId,color:q.color,size:q.size}}),'Cannot remove a size breakdown with cutting history');
+  }
+  if(['bom','operations'].includes(resource)) {
+    const row=await record(tx,actor,resource,id);
+    requireThat(!['ACTIVE','ARCHIVED'].includes((await record(tx,actor,'styles',row.styleId)).status),'Active style records are immutable');
+  }
   for(const [source,fields] of Object.entries(references)) for(const [field,target] of Object.entries(fields)) if(target===resource) {
     requireThat(!await delegate(tx,source as Resource).findFirst({where:{factoryId:actor.factoryId,[field]:id}}),`This record is used by ${source}. Remove dependent records first.`);
   }

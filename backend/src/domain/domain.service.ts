@@ -10,12 +10,14 @@ import { validateBalances } from './balance';
 import { validateMaterials } from './materials';
 import { preparePieceEntry, validateAssignments } from './workforce';
 import { transition } from './lifecycle';
+import { transitions } from './states';
+import { splitByRatio } from './ratios';
 import { LiveGateway } from '../live.gateway';
 
 @Injectable()
 export class DomainService {
   constructor(@Inject(PrismaService) readonly db:PrismaService,@Inject(LiveGateway) private live:LiveGateway) {}
-  resource(value:string):Resource { if(!(value in models)) throw new BadRequestException('Unknown resource'); return value as Resource; }
+  resource(value:string):Resource { if(!Object.hasOwn(models,value)) throw new BadRequestException('Unknown resource'); return value as Resource; }
   authorize(actor:Actor,resource:Resource) { if(!allowed(actor.role,resource)) throw new ForbiddenException('Your role cannot change this module'); }
   async list(actor:Actor,resource:Resource) {
     if(['payroll','pieceEntries'].includes(resource) && !['FACTORY_ADMIN','ACCOUNTS','IE'].includes(actor.role)) throw new ForbiddenException('Payroll data is restricted');
@@ -39,7 +41,10 @@ export class DomainService {
           if(id===actor.id) requireThat(data.role==='FACTORY_ADMIN','You cannot demote your own administrator account');
         }
         if(resource==='pieceEntries') data=await preparePieceEntry(tx,actor,data);
-        if(resource==='production') {data.enteredBy=actor.id;if(before)data.version=before.version+1;}
+        if(resource==='production') {
+          data.enteredBy=actor.id;if(before)data.version=before.version+1;
+          data.breakdown=data.size==='AUTO'?splitByRatio(await tx.orderQuantity.findMany({where:{orderId:data.orderId,color:data.color}}),data.inputPcs,data.producedPcs):Prisma.JsonNull;
+        }
         if(resource==='qc') {
           requireThat(data.reworkPcs+data.rejectedPcs<=data.inspectedPcs,'Rework and rejects cannot exceed inspected pieces');
           requireThat(data.defectCode==='NONE'?data.defectCount===0:data.defectCount>0,'Defect code and count must agree');
@@ -57,13 +62,13 @@ export class DomainService {
     } catch(e) { return this.translate(e); }
   }
   private async assertEditable(tx:Prisma.TransactionClient,actor:Actor,resource:Resource,before:Row,data:Row) {
-    if(before.status) requireThat(['DRAFT','PLANNED'].includes(before.status),'Only draft or planned records can be edited');
+    if(before.status && transitions[resource]) requireThat(['DRAFT','PLANNED'].includes(before.status),'Only draft or planned records can be edited');
     if(resource==='production' && scopedLineRoles.includes(actor.role)) requireThat(actor.lineIds.includes(before.lineId),'Entry belongs to another line');
     if(resource==='pieceEntries') await preparePieceEntry(tx,actor,before);
     if(resource==='qc') requireThat(before.resolvedPcs===0,'Resolved inspections are immutable');
     if(resource==='operations') requireThat(!await tx.pieceRateEntry.count({where:{operationId:before.id}}),'Operation is in use; create a new style revision to change rates');
     if(resource==='quantities') { const order=await record(tx,actor,'orders',before.orderId);requireThat(!['CANCELLED','CLOSED','SHIPPED'].includes(order.status),'Order is closed'); }
-    if(['production','cutting','qc','finishing','cartons','pieceEntries','quantities'].includes(resource)) for(const key of ['orderId','color','size','shipmentId','workerId','operationId']) if(before[key]) requireThat(before[key]===data[key],`Cannot change ${key} on an existing record`);
+    if(['production','cutting','qc','finishing','cartons','pieceEntries','quantities','materials'].includes(resource)) for(const key of ['orderId','color','size','shipmentId','workerId','operationId','bomItemId']) if(before[key]) requireThat(before[key]===data[key],`Cannot change ${key} on an existing record`);
   }
   async action(actor:Actor,resource:Resource,id:string,body:Row) {
     this.authorize(actor,resource);
@@ -72,14 +77,18 @@ export class DomainService {
         const before=await record(tx,actor,resource,id);
         if(before.lineId && scopedLineRoles.includes(actor.role)) requireThat(actor.lineIds.includes(before.lineId),'Record belongs to another line');
         let after:Row;
-        if(resource==='qc' && body.action==='resolve') {
+        if(resource==='users' && typeof body.active==='boolean') {
+          requireThat(id!==actor.id,'You cannot deactivate your own account');
+          after=await tx.user.update({where:{id},data:{active:body.active}});
+        } else if(resource==='qc' && body.action==='resolve') {
           const pcs=Number(body.pcs);
           requireThat(Number.isInteger(pcs)&&pcs>0&&pcs<=before.reworkPcs-before.resolvedPcs,'Enter a valid remaining rework quantity');
           after=await tx.qcInspection.update({where:{id},data:{resolvedPcs:{increment:pcs}}});
         } else {requireThat(typeof body.status==='string','Choose a target status');after=await transition(tx,actor,resource,id,body.status);}
         const warnings=await validateBalances(tx,actor);
         await audit(tx,actor,resource,id,'ACTION',before,after);
-        return {record:after,warnings};
+        const {passwordHash,...safe}=after;
+        return {record:safe,warnings};
       });
       this.live.changed(actor.factoryId,resource,result.record.lineId);return result;
     }catch(e){return this.translate(e);}
@@ -95,12 +104,13 @@ export class DomainService {
         await delegate(tx,resource).delete({where:{id}});
         await validateBalances(tx,actor);
         await audit(tx,actor,resource,id,'DELETE',before,null);
-        this.live.changed(actor.factoryId,resource);return {ok:true};
+        return {ok:true};
       });
     }catch(e){return this.translate(e);}
   }
   private translate(e:unknown):never {
     if(e instanceof Prisma.PrismaClientKnownRequestError && e.code==='P2002') throw new ConflictException('Duplicate record: this code, hour slot or reference already exists');
+    if(e instanceof Prisma.PrismaClientKnownRequestError && e.code==='P2003') throw new ConflictException('This record is referenced by production history and cannot be removed');
     throw e;
   }
 }
