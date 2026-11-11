@@ -2,7 +2,7 @@ import { ResourceConfig, ref, text, num, date, select, variant } from './modules
 import { merchandising } from './merchandising';
 import { operations } from './operations';
 import { Resource } from './types';
-import {advancedConfigs,advancedStates} from './advanced';
+import { advancedConfigs, advancedStates } from './advanced';
 const administration: Record<string, ResourceConfig> = {
   shipments: {
     name: 'Shipments',
@@ -130,10 +130,12 @@ const administration: Record<string, ResourceConfig> = {
     columns: ['name', 'email', 'role', 'active'],
   },
 };
-export const configs = { ...merchandising, ...operations, ...administration,...advancedConfigs } as Record<
-  Resource,
-  ResourceConfig
->;
+export const configs = {
+  ...merchandising,
+  ...operations,
+  ...administration,
+  ...advancedConfigs,
+} as Record<Resource, ResourceConfig>;
 export const nextStates: Record<string, Record<string, string[]>> = {
   ...advancedStates,
   orders: {

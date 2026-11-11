@@ -1,5 +1,5 @@
-import type {ModuleConfig} from './forms';
-import {advancedModules} from './advanced';
+import type { ModuleConfig } from './forms';
+import { advancedModules } from './advanced';
 export * from './forms';
 export const modules: Record<string, ModuleConfig> = {
   ...advancedModules,

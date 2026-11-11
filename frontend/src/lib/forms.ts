@@ -2,7 +2,16 @@ import { Resource } from './types';
 export type Field = {
   key: string;
   label: string;
-  type?: 'text' | 'number' | 'date' | 'email' | 'password' | 'select' | 'checkbox' | 'lines' | 'textarea';
+  type?:
+    | 'text'
+    | 'number'
+    | 'date'
+    | 'email'
+    | 'password'
+    | 'select'
+    | 'checkbox'
+    | 'lines'
+    | 'textarea';
   options?: string[];
   ref?: Resource;
   default?: string | number | boolean;

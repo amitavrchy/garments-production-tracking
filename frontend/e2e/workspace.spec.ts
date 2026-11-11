@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 const email = process.env.SEED_ADMIN_EMAIL || 'admin@loom.local',
   password = process.env.SEED_ADMIN_PASSWORD || 'ChangeMe123!';
 async function login(page: Page) {
-  await page.goto('/');
+  await page.goto('/login');
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in to workspace' }).click();
@@ -122,7 +122,7 @@ test('mobile navigation has no document overflow and all text is at least 14px',
       })),
   );
   expect(small).toEqual([]);
-  await page.goto('/');
+  await page.goto('/workspace');
   await expect(page.getByRole('heading', { name: 'Production overview.' })).toBeVisible();
   await page.screenshot({
     path: 'artifacts/overview-mobile.png',

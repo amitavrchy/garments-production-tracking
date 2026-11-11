@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Req, Inject, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Req,
+  Inject,
+  Headers,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { DomainService } from './domain.service';
 import { AuthService } from '../auth/auth.service';
@@ -18,9 +29,9 @@ export class DomainController {
     @Req() req: Request,
     @Param('resource') r: string,
     @Body() body: unknown,
-    @Headers('idempotency-key') key?:string,
+    @Headers('idempotency-key') key?: string,
   ) {
-    return this.domain.write(await this.actor(req), this.domain.resource(r), body,undefined,key);
+    return this.domain.write(await this.actor(req), this.domain.resource(r), body, undefined, key);
   }
   @Patch(':resource/:id') async update(
     @Req() req: Request,

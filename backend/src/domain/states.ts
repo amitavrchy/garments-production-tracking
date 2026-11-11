@@ -1,4 +1,4 @@
-import {advancedTransitions} from '../advanced/catalog';
+import { advancedTransitions } from '../advanced/catalog';
 export const transitions: Record<string, Record<string, string[]>> = {
   ...advancedTransitions,
   orders: {

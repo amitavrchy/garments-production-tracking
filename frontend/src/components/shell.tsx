@@ -32,14 +32,14 @@ import { Login } from './login';
 import { Loading, Modal, Empty } from './primitives';
 import { title } from '@/lib/types';
 import { api } from '@/lib/api';
-import {OfflineOutbox} from './offline-outbox';
+import { OfflineOutbox } from './offline-outbox';
 const groups = [
   {
     label: 'WORKSPACE',
     items: [
       ['/workspace', 'Overview', LayoutDashboard],
-      ['/control-tower','Control tower',ActivityIcon],
-      ['/approvals','Approval desk',ShieldCheck],
+      ['/control-tower', 'Control tower', ActivityIcon],
+      ['/approvals', 'Approval desk', ShieldCheck],
       ['/orders', 'Buyer orders', ShoppingBag],
       ['/styles', 'Style library', Shirt],
       ['/planning', 'Planning', CalendarRange],
@@ -56,8 +56,18 @@ const groups = [
     ],
   },
   {
-    label:'ADVANCED OPERATIONS',
-    items:[['/capacity','Capacity & balancing',CalendarRange],['/procurement','Procurement',ShoppingBag],['/warehouse','Warehouse & fabric',Boxes],['/traceability','Bundle traceability',Layers3],['/equipment','Equipment & losses',Factory],['/workforce','Workforce intelligence',Users],['/assurance','Quality assurance',ShieldCheck],['/commercial','Costing & subcontracting',Wallet],['/governance','Compliance & impact',PackageCheck]],
+    label: 'ADVANCED OPERATIONS',
+    items: [
+      ['/capacity', 'Capacity & balancing', CalendarRange],
+      ['/procurement', 'Procurement', ShoppingBag],
+      ['/warehouse', 'Warehouse & fabric', Boxes],
+      ['/traceability', 'Bundle traceability', Layers3],
+      ['/equipment', 'Equipment & losses', Factory],
+      ['/workforce', 'Workforce intelligence', Users],
+      ['/assurance', 'Quality assurance', ShieldCheck],
+      ['/commercial', 'Costing & subcontracting', Wallet],
+      ['/governance', 'Compliance & impact', PackageCheck],
+    ],
   },
   {
     label: 'MANAGEMENT',
@@ -69,7 +79,9 @@ const groups = [
     ],
   },
 ] as const;
-function ActivityIcon({size=19}:{size?:number}){return <ChartNoAxesCombined size={size}/>;}
+function ActivityIcon({ size = 19 }: { size?: number }) {
+  return <ChartNoAxesCombined size={size} />;
+}
 export function Shell({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useSession(),
     path = usePathname(),
@@ -80,9 +92,36 @@ export function Shell({ children }: { children: ReactNode }) {
     [alerts, setAlerts] = useState<any[] | null>(null),
     [alertError, setAlertError] = useState(''),
     [signoutError, setSignoutError] = useState('');
-  const [results,setResults]=useState<{id:string;title:string;kind:string;href:string}[]>([]),[factoryName,setFactoryName]=useState('Factory workspace');
-  useEffect(()=>{if(!user)return;void api('/data/factories').then(rows=>setFactoryName(rows[0]?.name||'Factory workspace')).catch(()=>{});},[user]);
-  useEffect(()=>{if(!search||query.trim().length<2){setResults([]);return;}let active=true;const t=setTimeout(()=>{void api(`/search?q=${encodeURIComponent(query)}`).then(r=>{if(active)setResults(r);}).catch(()=>{if(active)setResults([]);});},250);return()=>{active=false;clearTimeout(t);};},[search,query]);
+  const [results, setResults] = useState<
+      { id: string; title: string; kind: string; href: string }[]
+    >([]),
+    [factoryName, setFactoryName] = useState('Factory workspace');
+  useEffect(() => {
+    if (!user) return;
+    void api('/data/factories')
+      .then((rows) => setFactoryName(rows[0]?.name || 'Factory workspace'))
+      .catch(() => {});
+  }, [user]);
+  useEffect(() => {
+    if (!search || query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    let active = true;
+    const t = setTimeout(() => {
+      void api(`/search?q=${encodeURIComponent(query)}`)
+        .then((r) => {
+          if (active) setResults(r);
+        })
+        .catch(() => {
+          if (active) setResults([]);
+        });
+    }, 250);
+    return () => {
+      active = false;
+      clearTimeout(t);
+    };
+  }, [search, query]);
   useEffect(() => {
     setMobile(false);
   }, [path]);
@@ -235,7 +274,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <main id="main-content" className="main-content">
           {children}
         </main>
-        <OfflineOutbox/>
+        <OfflineOutbox />
         <footer className="app-footer">
           <span>Loom · Garments production workspace</span>
           <span>Asia/Dhaka · All quantities in pieces</span>
@@ -258,7 +297,23 @@ export function Shell({ children }: { children: ReactNode }) {
               />
             </div>
             <div className="command-results">
-              {results.map(result=><button key={result.id} onClick={()=>{router.push(result.href);setSearch(false);setQuery('');}}><Search size={19}/><span>{result.title}<small className="cell-secondary">{result.kind}</small></span><ArrowUpRight size={17}/></button>)}
+              {results.map((result) => (
+                <button
+                  key={result.id}
+                  onClick={() => {
+                    router.push(result.href);
+                    setSearch(false);
+                    setQuery('');
+                  }}
+                >
+                  <Search size={19} />
+                  <span>
+                    {result.title}
+                    <small className="cell-secondary">{result.kind}</small>
+                  </span>
+                  <ArrowUpRight size={17} />
+                </button>
+              ))}
               {nav
                 .filter(([, label]) => label.toLowerCase().includes(query.toLowerCase()))
                 .map(([href, label, Icon]) => (

@@ -1,15 +1,150 @@
 'use client';
-import {useEffect,useState,useRef} from 'react';
-import {CloudOff,CloudUpload,Trash2} from 'lucide-react';
-import {api} from '@/lib/api';
-import {offlineEntries,saveOffline,removeOffline,OfflineEntry} from '@/lib/offline';
-import {useSession} from './providers';
-import {Modal,ErrorBanner} from './primitives';
-export function OfflineOutbox(){
-  const {user}=useSession(),[entries,setEntries]=useState<OfflineEntry[]>([]),[online,setOnline]=useState(true),[open,setOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');const syncing=useRef(false);
-  const reload=async()=>{if(!user)return;try{setEntries(await offlineEntries(user.id));}catch{setError('Local storage is unavailable. Offline drafts cannot be saved in this browser.');}};
-  const sync=async()=>{if(!user||!navigator.onLine||syncing.current)return;syncing.current=true;setBusy(true);try{for(const entry of await offlineEntries(user.id)){if(entry.factoryId!==user.factoryId)continue;try{await api('/data/production',{method:'POST',headers:{'Idempotency-Key':entry.id},body:JSON.stringify(entry.body)});await removeOffline(entry.id);}catch(e){await saveOffline({...entry,error:(e as Error).message});if(e instanceof TypeError)break;}}await reload();}finally{setBusy(false);syncing.current=false;}};
-  useEffect(()=>{void reload();setOnline(navigator.onLine);const update=()=>{setOnline(navigator.onLine);if(navigator.onLine)void sync();};const load=()=>void reload();window.addEventListener('online',update);window.addEventListener('offline',update);window.addEventListener('loom-outbox',load);return()=>{window.removeEventListener('online',update);window.removeEventListener('offline',update);window.removeEventListener('loom-outbox',load);};},[user]);
-  if(!entries.length&&online&&!error)return null;
-  return <><button className={`outbox-indicator ${online?'':'offline'}`} onClick={()=>setOpen(true)}>{online?<CloudUpload size={18}/>:<CloudOff size={18}/>}<span>{busy?'Synchronizing…':`${entries.length} offline draft${entries.length===1?'':'s'}`}</span></button>{open&&<Modal title="Production outbox" subtitle="Drafts stay on this browser and sync only for the signed-in user and factory." onClose={()=>!busy&&setOpen(false)} wide><div className="record-details">{error&&<ErrorBanner message={error}/>}<p className="info-note">Unsent production drafts have not changed factory totals. Validation conflicts remain here for review; no server record is overwritten.</p>{entries.map(entry=><article className="offline-entry" key={entry.id}><div><strong>{String(entry.body.date)} · {String(entry.body.hourStart)}:00</strong><p>{String(entry.body.producedPcs)} pieces · local draft {new Date(entry.createdAt).toLocaleString()}</p>{entry.error&&<p className="warning-text">{entry.error}</p>}</div><button className="button" disabled={busy} onClick={()=>{const blob=new Blob([JSON.stringify(entry.body,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`production-${entry.id}.json`;a.click();URL.revokeObjectURL(url);}}>Export draft</button><button className="icon-button" aria-label="Remove local draft" disabled={busy} onClick={()=>void removeOffline(entry.id)}><Trash2 size={18}/></button></article>)}{!entries.length&&<p>No unsent production drafts.</p>}<div className="detail-actions"><button className="button primary" disabled={!online||busy||!entries.length} onClick={()=>void sync()}>{busy?'Synchronizing…':'Sync pending entries'}</button><a className="button" href="/production">Review production records</a></div></div></Modal>}</>;
+import { useEffect, useState, useRef } from 'react';
+import { CloudOff, CloudUpload, Trash2 } from 'lucide-react';
+import { api } from '@/lib/api';
+import { offlineEntries, saveOffline, removeOffline, OfflineEntry } from '@/lib/offline';
+import { useSession } from './providers';
+import { Modal, ErrorBanner } from './primitives';
+export function OfflineOutbox() {
+  const { user } = useSession(),
+    [entries, setEntries] = useState<OfflineEntry[]>([]),
+    [online, setOnline] = useState(true),
+    [open, setOpen] = useState(false),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState('');
+  const syncing = useRef(false);
+  const reload = async () => {
+    if (!user) return;
+    try {
+      setEntries(await offlineEntries(user.id));
+    } catch {
+      setError('Local storage is unavailable. Offline drafts cannot be saved in this browser.');
+    }
+  };
+  const sync = async () => {
+    if (!user || !navigator.onLine || syncing.current) return;
+    syncing.current = true;
+    setBusy(true);
+    try {
+      for (const entry of await offlineEntries(user.id)) {
+        if (entry.factoryId !== user.factoryId) continue;
+        try {
+          await api('/data/production', {
+            method: 'POST',
+            headers: { 'Idempotency-Key': entry.id },
+            body: JSON.stringify(entry.body),
+          });
+          await removeOffline(entry.id);
+        } catch (e) {
+          await saveOffline({ ...entry, error: (e as Error).message });
+          if (e instanceof TypeError) break;
+        }
+      }
+      await reload();
+    } finally {
+      setBusy(false);
+      syncing.current = false;
+    }
+  };
+  useEffect(() => {
+    void reload();
+    setOnline(navigator.onLine);
+    const update = () => {
+      setOnline(navigator.onLine);
+      if (navigator.onLine) void sync();
+    };
+    const load = () => void reload();
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    window.addEventListener('loom-outbox', load);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+      window.removeEventListener('loom-outbox', load);
+    };
+  }, [user]);
+  if (!entries.length && online && !error) return null;
+  return (
+    <>
+      <button
+        className={`outbox-indicator ${online ? '' : 'offline'}`}
+        onClick={() => setOpen(true)}
+      >
+        {online ? <CloudUpload size={18} /> : <CloudOff size={18} />}
+        <span>
+          {busy
+            ? 'Synchronizing…'
+            : `${entries.length} offline draft${entries.length === 1 ? '' : 's'}`}
+        </span>
+      </button>
+      {open && (
+        <Modal
+          title="Production outbox"
+          subtitle="Drafts stay on this browser and sync only for the signed-in user and factory."
+          onClose={() => !busy && setOpen(false)}
+          wide
+        >
+          <div className="record-details">
+            {error && <ErrorBanner message={error} />}
+            <p className="info-note">
+              Unsent production drafts have not changed factory totals. Validation conflicts remain
+              here for review; no server record is overwritten.
+            </p>
+            {entries.map((entry) => (
+              <article className="offline-entry" key={entry.id}>
+                <div>
+                  <strong>
+                    {String(entry.body.date)} · {String(entry.body.hourStart)}:00
+                  </strong>
+                  <p>
+                    {String(entry.body.producedPcs)} pieces · local draft{' '}
+                    {new Date(entry.createdAt).toLocaleString()}
+                  </p>
+                  {entry.error && <p className="warning-text">{entry.error}</p>}
+                </div>
+                <button
+                  className="button"
+                  disabled={busy}
+                  onClick={() => {
+                    const blob = new Blob([JSON.stringify(entry.body, null, 2)], {
+                        type: 'application/json',
+                      }),
+                      url = URL.createObjectURL(blob),
+                      a = document.createElement('a');
+                    a.href = url;
+                    a.download = `production-${entry.id}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Export draft
+                </button>
+                <button
+                  className="icon-button"
+                  aria-label="Remove local draft"
+                  disabled={busy}
+                  onClick={() => void removeOffline(entry.id)}
+                >
+                  <Trash2 size={18} />
+                </button>
+              </article>
+            ))}
+            {!entries.length && <p>No unsent production drafts.</p>}
+            <div className="detail-actions">
+              <button
+                className="button primary"
+                disabled={!online || busy || !entries.length}
+                onClick={() => void sync()}
+              >
+                {busy ? 'Synchronizing…' : 'Sync pending entries'}
+              </button>
+              <a className="button" href="/production">
+                Review production records
+              </a>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
 }

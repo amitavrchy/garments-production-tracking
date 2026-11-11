@@ -7,7 +7,7 @@ import { Workspace } from '@/lib/workspace';
 import { api } from '@/lib/api';
 import { Modal, ErrorBanner } from './primitives';
 import { useSession } from './providers';
-import {saveOffline} from '@/lib/offline';
+import { saveOffline } from '@/lib/offline';
 export function RecordForm({
   resource,
   record,
@@ -50,7 +50,7 @@ export function RecordForm({
   );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
-  const [requestKey]=useState(()=>crypto.randomUUID());
+  const [requestKey] = useState(() => crypto.randomUUID());
   const update = (key: string, value: unknown) => setValues((v) => ({ ...v, [key]: value }));
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -65,13 +65,37 @@ export function RecordForm({
       );
       const result = await api(`/data/${resource}${record ? `/${record.id}` : ''}`, {
         method: record ? 'PATCH' : 'POST',
-        headers:!record?{'Idempotency-Key':requestKey}:{},
-        body: JSON.stringify({...body,...(record?.version?{expectedVersion:record.version}:{})}),
+        headers: !record ? { 'Idempotency-Key': requestKey } : {},
+        body: JSON.stringify({
+          ...body,
+          ...(record?.version ? { expectedVersion: record.version } : {}),
+        }),
       });
       onSaved(result.warnings || []);
     } catch (e) {
-      if(e instanceof TypeError&&resource==='production'&&!record&&user){
-        try{await saveOffline({id:requestKey,actorId:user.id,factoryId:user.factoryId,body:Object.fromEntries(config.fields.map(f=>[f.key,f.type==='number'?Number(values[f.key]):values[f.key]])),createdAt:new Date().toISOString()});onSaved(['Saved in this browser’s outbox. Sync when the connection returns.']);return;}catch{setError('Connection failed and local draft storage is unavailable. Keep this form open and retry.');setBusy(false);return;}
+      if (e instanceof TypeError && resource === 'production' && !record && user) {
+        try {
+          await saveOffline({
+            id: requestKey,
+            actorId: user.id,
+            factoryId: user.factoryId,
+            body: Object.fromEntries(
+              config.fields.map((f) => [
+                f.key,
+                f.type === 'number' ? Number(values[f.key]) : values[f.key],
+              ]),
+            ),
+            createdAt: new Date().toISOString(),
+          });
+          onSaved(['Saved in this browser’s outbox. Sync when the connection returns.']);
+          return;
+        } catch {
+          setError(
+            'Connection failed and local draft storage is unavailable. Keep this form open and retry.',
+          );
+          setBusy(false);
+          return;
+        }
       }
       setError(e instanceof Error ? e.message : 'Could not save');
       setBusy(false);
@@ -149,7 +173,16 @@ export function RecordForm({
                         </option>
                       ))}
                 </select>
-              ) : f.type==='textarea' ? <textarea aria-label={f.label} value={values[f.key]} required={!f.optional} maxLength={4000} rows={3} onChange={e=>update(f.key,e.target.value)}/> : (
+              ) : f.type === 'textarea' ? (
+                <textarea
+                  aria-label={f.label}
+                  value={values[f.key]}
+                  required={!f.optional}
+                  maxLength={4000}
+                  rows={3}
+                  onChange={(e) => update(f.key, e.target.value)}
+                />
+              ) : (
                 <input
                   type={f.type || 'text'}
                   aria-label={f.label}

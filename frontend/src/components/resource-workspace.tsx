@@ -23,8 +23,8 @@ import { useSession } from './providers';
 import { RecordForm } from './record-form';
 import { Badge, ErrorBanner, Loading, Empty, Modal } from './primitives';
 import { MaterialRequirements } from './material-requirements';
-import {AdvancedModulePanel,AdvancedRecordDetails} from './advanced-panels';
-import {MasterImport} from './master-import';
+import { AdvancedModulePanel, AdvancedRecordDetails } from './advanced-panels';
+import { MasterImport } from './master-import';
 export function ResourceWorkspace({ module }: { module: string }) {
   const config = modules[module],
     workspace = useWorkspace(),
@@ -69,7 +69,7 @@ export function ResourceWorkspace({ module }: { module: string }) {
     );
   const rc = configs[resource],
     writable = canWrite(user?.role || '', resource);
-  const creatable=writable&&!(resource==='lots'&&user?.role==='QC');
+  const creatable = writable && !(resource === 'lots' && user?.role === 'QC') && !(resource==='bundles'&&!['FACTORY_ADMIN','LINE_CHIEF','SUPERVISOR'].includes(user?.role||''));
   const rows = (data[resource] || []).filter(
     (row) =>
       (status === 'ALL' || row.status === status) &&
@@ -91,9 +91,12 @@ export function ResourceWorkspace({ module }: { module: string }) {
     if (key === 'status') return <Badge value={row[key]} />;
     const field = rc.fields.find((f) => f.key === key);
     if (field?.ref) return workspace.label(field.ref, row[key]);
-    if(key==='unitCostMinor'&&row.currency&&row.currency!=='BDT')return new Intl.NumberFormat('en-US',{style:'currency',currency:row.currency}).format(row[key]/100);
+    if (key === 'unitCostMinor' && row.currency && row.currency !== 'BDT')
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: row.currency }).format(
+        row[key] / 100,
+      );
     if (key.endsWith('Minor')) return money(row[key]);
-    if(key==='marginPercent')return Number(row[key]||0).toFixed(2)+'%';
+    if (key === 'marginPercent') return Number(row[key] || 0).toFixed(2) + '%';
     if (typeof row[key] === 'boolean') return row[key] ? 'Yes' : 'No';
     if (typeof row[key] === 'number') return number(row[key]);
     if (Array.isArray(row[key])) return row[key].join(', ') || '—';
@@ -121,7 +124,7 @@ export function ResourceWorkspace({ module }: { module: string }) {
     try {
       const result = await api(`/data/${resource}/${selected.id}/actions`, {
         method: 'POST',
-        body: JSON.stringify({...body,expectedVersion:selected.version}),
+        body: JSON.stringify({ ...body, expectedVersion: selected.version }),
       });
       setSelected(result.record);
       setToast(
@@ -183,7 +186,10 @@ export function ResourceWorkspace({ module }: { module: string }) {
             <Download size={17} />
             Export CSV
           </button>
-          {user?.role==='FACTORY_ADMIN'&&['buyers','workers','suppliers'].includes(resource)&&<MasterImport resource={resource} onSaved={refresh}/>}
+          {user?.role === 'FACTORY_ADMIN' &&
+            ['buyers', 'workers', 'suppliers'].includes(resource) && (
+              <MasterImport resource={resource} onSaved={refresh} />
+            )}
           {creatable && resource !== 'factories' && (
             <button className="button primary" onClick={() => setForm('new')}>
               <Plus size={18} />
@@ -202,7 +208,7 @@ export function ResourceWorkspace({ module }: { module: string }) {
         </div>
       )}
       {error && <ErrorBanner message={error} retry={refresh} />}
-      <AdvancedModulePanel module={module} workspace={workspace}/>
+      <AdvancedModulePanel module={module} workspace={workspace} />
       <div className="tabs" role="tablist" aria-label={config.title}>
         {available.map((r) => (
           <button role="tab" aria-selected={r === resource} key={r} onClick={() => changeTab(r)}>
@@ -397,7 +403,7 @@ export function ResourceWorkspace({ module }: { module: string }) {
                 </div>
               ))}
             </dl>
-            <AdvancedRecordDetails resource={resource} record={selected}/>
+            <AdvancedRecordDetails resource={resource} record={selected} />
             {resource === 'payroll' && selected.breakdown && (
               <div className="table-scroll">
                 <table>
@@ -422,18 +428,22 @@ export function ResourceWorkspace({ module }: { module: string }) {
             )}
             {writable && (
               <div className="detail-actions">
-                {(!selected.status || ['DRAFT', 'PLANNED','OPEN','IN_PROGRESS','FAILED'].includes(selected.status))&&!['lots','lotIssues','bundles'].includes(resource) && (
-                  <button
-                    className="button"
-                    onClick={() => {
-                      setForm(selected);
-                      setSelected(null);
-                    }}
-                  >
-                    <Pencil size={16} />
-                    Edit record
-                  </button>
-                )}
+                {(!selected.status ||
+                  ['DRAFT', 'PLANNED', 'OPEN',...(['maintenance','correctiveActions'].includes(resource)?['IN_PROGRESS']:[]),...(resource==='compliance'?['FAILED']:[]),...(resource==='scenarios'?['SIMULATED']:[])].includes(
+                    selected.status,
+                  )) &&
+                  !['lots', 'lotIssues', 'bundles'].includes(resource) && (
+                    <button
+                      className="button"
+                      onClick={() => {
+                        setForm(selected);
+                        setSelected(null);
+                      }}
+                    >
+                      <Pencil size={16} />
+                      Edit record
+                    </button>
+                  )}
                 {nextStates[resource]?.[selected.status]?.map((state) => (
                   <button
                     className={`button ${state === 'CANCELLED' ? 'danger' : 'primary'}`}
@@ -444,7 +454,26 @@ export function ResourceWorkspace({ module }: { module: string }) {
                     {busy ? 'Updating…' : `Move to ${title(state)}`}
                   </button>
                 ))}
-                {resource==='lots'&&['FACTORY_ADMIN','QC'].includes(user?.role||'')&&selected.issuedQty===0&&<><button className="button primary" disabled={busy} onClick={()=>action({action:'inspect',result:'PASS'})}>Clear fabric QC</button><button className="button danger" disabled={busy} onClick={()=>action({action:'inspect',result:'FAIL'})}>Fail fabric QC</button></>}
+                {resource === 'lots' &&
+                  ['FACTORY_ADMIN', 'QC'].includes(user?.role || '') &&
+                  selected.issuedQty === 0 && (
+                    <>
+                      <button
+                        className="button primary"
+                        disabled={busy}
+                        onClick={() => action({ action: 'inspect', result: 'PASS' })}
+                      >
+                        Clear fabric QC
+                      </button>
+                      <button
+                        className="button danger"
+                        disabled={busy}
+                        onClick={() => action({ action: 'inspect', result: 'FAIL' })}
+                      >
+                        Fail fabric QC
+                      </button>
+                    </>
+                  )}
                 {resource === 'qc' && selected.reworkPcs > selected.resolvedPcs && (
                   <button
                     className="button primary"
@@ -475,7 +504,19 @@ export function ResourceWorkspace({ module }: { module: string }) {
                     'finishing',
                     'cartons',
                     'materials',
-                    'lots','lotIssues','bundles','downtime','maintenance','attendance','skills','stations','qualityAudits','correctiveActions','compliance','subcontracts','sustainability',
+                    'lots',
+                    'lotIssues',
+                    'bundles',
+                    'downtime',
+                    'maintenance',
+                    'attendance',
+                    'skills',
+                    'stations',
+                    'qualityAudits',
+                    'correctiveActions',
+                    'compliance',
+                    'subcontracts',
+                    'sustainability',
                   ].includes(resource) && (
                     <button
                       className="button danger"
@@ -500,7 +541,10 @@ export function ResourceWorkspace({ module }: { module: string }) {
               </div>
             )}
             {resource === 'shipments' && (
-              <a className="button" href={`/documents/${selected.id}`}><ArrowUpRight size={17}/>Invoice & packing documents</a>
+              <a className="button" href={`/documents/${selected.id}`}>
+                <ArrowUpRight size={17} />
+                Invoice & packing documents
+              </a>
             )}
             {resource === 'shipments' && (
               <a className="button" href={`/api/reports/packing/${selected.id}.csv`}>

@@ -1,4 +1,4 @@
-import type {AdvancedResource} from './advanced';
+import type { AdvancedResource } from './advanced';
 export type Row = { id: string; [key: string]: any };
 export type User = Row & {
   name: string;

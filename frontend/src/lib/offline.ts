@@ -1,5 +1,56 @@
-export type OfflineEntry={id:string;actorId:string;factoryId:string;body:Record<string,unknown>;createdAt:string;error?:string};
-const database=()=>new Promise<IDBDatabase>((resolve,reject)=>{const request=indexedDB.open('loom-production-outbox',1);request.onupgradeneeded=()=>request.result.createObjectStore('entries',{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
-export async function offlineEntries(actorId:string){const db=await database();try{return await new Promise<OfflineEntry[]>((resolve,reject)=>{const request=db.transaction('entries','readonly').objectStore('entries').getAll();request.onsuccess=()=>resolve((request.result as OfflineEntry[]).filter(e=>e.actorId===actorId));request.onerror=()=>reject(request.error);});}finally{db.close();}}
-export async function saveOffline(entry:OfflineEntry){const db=await database();try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction('entries','readwrite');tx.objectStore('entries').put(entry);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});window.dispatchEvent(new Event('loom-outbox'));}finally{db.close();}}
-export async function removeOffline(id:string){const db=await database();try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction('entries','readwrite');tx.objectStore('entries').delete(id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});window.dispatchEvent(new Event('loom-outbox'));}finally{db.close();}}
+export type OfflineEntry = {
+  id: string;
+  actorId: string;
+  factoryId: string;
+  body: Record<string, unknown>;
+  createdAt: string;
+  error?: string;
+};
+const database = () =>
+  new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open('loom-production-outbox', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('entries', { keyPath: 'id' });
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+export async function offlineEntries(actorId: string) {
+  const db = await database();
+  try {
+    return await new Promise<OfflineEntry[]>((resolve, reject) => {
+      const request = db.transaction('entries', 'readonly').objectStore('entries').getAll();
+      request.onsuccess = () =>
+        resolve((request.result as OfflineEntry[]).filter((e) => e.actorId === actorId));
+      request.onerror = () => reject(request.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+export async function saveOffline(entry: OfflineEntry) {
+  const db = await database();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('entries', 'readwrite');
+      tx.objectStore('entries').put(entry);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    window.dispatchEvent(new Event('loom-outbox'));
+  } finally {
+    db.close();
+  }
+}
+export async function removeOffline(id: string) {
+  const db = await database();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('entries', 'readwrite');
+      tx.objectStore('entries').delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    window.dispatchEvent(new Event('loom-outbox'));
+  } finally {
+    db.close();
+  }
+}

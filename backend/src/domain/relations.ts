@@ -3,9 +3,9 @@ import { ForbiddenException } from '@nestjs/common';
 import { Actor, scopedLineRoles } from '../auth/permissions';
 import { delegate, record, requireThat, Row } from './context';
 import { Resource } from './schemas';
-import {advancedReferences} from '../advanced/catalog';
+import { advancedReferences } from '../advanced/catalog';
 export const references: Partial<Record<Resource, Record<string, Resource>>> = {
-  ...advancedReferences as Partial<Record<Resource,Record<string,Resource>>>,
+  ...(advancedReferences as Partial<Record<Resource, Record<string, Resource>>>),
   lines: { floorId: 'floors' },
   machines: { lineId: 'lines' },
   bom: { styleId: 'styles' },
@@ -54,7 +54,7 @@ export async function checkReferences(
         }),
         'Color and size must match the order breakdown',
       );
-    if (['materials','purchases','lots'].includes(resource))
+    if (['materials', 'purchases', 'lots'].includes(resource))
       requireThat(
         (await record(tx, actor, 'bom', data.bomItemId)).styleId === order.styleId,
         'Material must belong to the order style',

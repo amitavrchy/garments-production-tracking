@@ -5,6 +5,7 @@ model Allocation {
   orderId String
   date String
   target Int
+  version Int @default(1)
   @@unique([lineId, date])
 }
 model CuttingRecord {

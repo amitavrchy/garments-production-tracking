@@ -1,5 +1,5 @@
 import { Resource } from './types';
-import {advancedPermissions} from './advanced';
+import { advancedPermissions } from './advanced';
 const grants: Partial<Record<Resource, string[]>> = {
   buyers: ['MERCHANDISER'],
   orders: ['MERCHANDISER'],
@@ -21,13 +21,14 @@ const grants: Partial<Record<Resource, string[]>> = {
   payroll: ['ACCOUNTS'],
 };
 export const canWrite = (role: string, resource: Resource) =>
-  role === 'FACTORY_ADMIN' || !!(grants[resource]||advancedPermissions[resource])?.includes(role);
+  role === 'FACTORY_ADMIN' || !!(grants[resource] || advancedPermissions[resource])?.includes(role);
 export const canRead = (role: string, resource: Resource) =>
-  resource==='costing'?['FACTORY_ADMIN','ACCOUNTS','MERCHANDISER'].includes(role):
-  resource === 'users'
-    ? role === 'FACTORY_ADMIN'
-    : resource === 'payroll'
-      ? ['FACTORY_ADMIN', 'ACCOUNTS'].includes(role)
-      : resource === 'pieceEntries'
-        ? ['FACTORY_ADMIN', 'ACCOUNTS', 'IE', 'SUPERVISOR'].includes(role)
-        : true;
+  resource === 'costing'
+    ? ['FACTORY_ADMIN', 'ACCOUNTS', 'MERCHANDISER'].includes(role)
+    : resource === 'users'
+      ? role === 'FACTORY_ADMIN'
+      : resource === 'payroll'
+        ? ['FACTORY_ADMIN', 'ACCOUNTS'].includes(role)
+        : resource === 'pieceEntries'
+          ? ['FACTORY_ADMIN', 'ACCOUNTS', 'IE', 'SUPERVISOR'].includes(role)
+          : true;
