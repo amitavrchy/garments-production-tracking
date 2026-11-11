@@ -23,6 +23,7 @@ import { ReportsService } from './reports.service';
 import { ReportsController } from './reports.controller';
 import { LiveGateway } from './live.gateway';
 import { JobsService } from './jobs.service';
+import { OperationsController } from './operations.controller';
 const secret = process.env.JWT_SECRET;
 if (!secret || secret.length < 32) throw new Error('JWT_SECRET must have at least 32 characters');
 const origins = (process.env.CORS_ORIGINS || 'http://localhost:3300').split(',');
@@ -36,7 +37,13 @@ class HealthController {
 }
 @Module({
   imports: [JwtModule.register({ secret, signOptions: { expiresIn: '8h' } })],
-  controllers: [HealthController, AuthController, DomainController, ReportsController],
+  controllers: [
+    HealthController,
+    AuthController,
+    DomainController,
+    ReportsController,
+    OperationsController,
+  ],
   providers: [PrismaService, AuthService, LiveGateway, DomainService, ReportsService, JobsService],
 })
 class AppModule {}

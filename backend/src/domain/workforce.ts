@@ -5,6 +5,10 @@ import { earnings, sum } from './math';
 export async function preparePieceEntry(tx: Prisma.TransactionClient, actor: Actor, data: Row) {
   const operation = await record(tx, actor, 'operations', data.operationId);
   requireThat(
+    earnings(data.pcs, operation.pieceRateMinor) <= 2147483647,
+    'Entry earnings exceed the supported poisha limit; split this output into smaller entries',
+  );
+  requireThat(
     !(await tx.payrollRun.findFirst({
       where: {
         factoryId: actor.factoryId,

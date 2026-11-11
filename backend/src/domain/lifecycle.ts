@@ -89,6 +89,10 @@ export async function transition(
       requireThat(breakdown.length > 0, 'No piece-rate entries in this period');
       extra.breakdown = breakdown;
       extra.totalMinor = sum(breakdown, (w) => w.amountMinor);
+      requireThat(
+        extra.totalMinor <= 2147483647,
+        'Payroll total exceeds the supported poisha limit; use a shorter payroll period',
+      );
       extra.calculatedBy = actor.id;
     }
     if (target === 'APPROVED') {
