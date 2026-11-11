@@ -16,10 +16,10 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
         const actor={id:'system',factoryId:factory.id,role:'FACTORY_ADMIN',lineIds:[],name:'Scheduler',email:''} as Actor;
         const summary=await this.reports.overview(actor);
         const redis=await this.queue!.client;
-        await redis.set(`factory:${factory.id}:nightly`,JSON.stringify(summary),'EX',86400);
+        await redis.set(`factory:${factory.id}:nightly`,JSON.stringify(summary),{EX:86400});
         for(const style of await this.db.style.findMany({where:{factoryId:factory.id}})) {
           const operations=await this.db.operation.findMany({where:{styleId:style.id}});
-          await redis.set(`style:${style.id}:bulletin`,JSON.stringify({smv:style.smv,operations}),'EX',86400);
+          await redis.set(`style:${style.id}:bulletin`,JSON.stringify({smv:style.smv,operations}),{EX:86400});
         }
       }
     },{connection});

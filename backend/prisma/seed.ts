@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { hash } from 'bcryptjs';
 import { dhakaDate } from '../src/domain/math';
-const db=new PrismaClient();
+const db=new PrismaClient({adapter:new PrismaPg({connectionString:process.env.DATABASE_URL})});
 async function seed(){
   if(await db.factory.count()){console.log('Database already contains a factory; seed skipped.');return;}
   const password=process.env.SEED_ADMIN_PASSWORD;
