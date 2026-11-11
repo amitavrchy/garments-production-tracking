@@ -1,4 +1,4 @@
-import { Injectable, Inject, UnauthorizedException, TooManyRequestsException } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException, HttpException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcryptjs';
 import { PrismaService } from '../prisma.service';
@@ -13,7 +13,7 @@ export class AuthService {
     const now = Date.now();
     for (const [k,v] of this.attempts) if(v.until < now) this.attempts.delete(k);
     const hit = this.attempts.get(key);
-    if (hit && hit.count >= 8) throw new TooManyRequestsException('Too many attempts. Try again in 15 minutes.');
+    if (hit && hit.count >= 8) throw new HttpException('Too many attempts. Try again in 15 minutes.',429);
     this.attempts.set(key, { count: (hit?.count || 0) + 1, until: hit?.until || now + 900000 });
     const user = await this.db.user.findUnique({ where: { email: email.toLowerCase() } });
     if (!user?.active || !await compare(password, user.passwordHash)) throw new UnauthorizedException('Email or password is incorrect');
