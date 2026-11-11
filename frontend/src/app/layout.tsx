@@ -3,6 +3,8 @@ import { Providers } from '@/components/providers';
 import './globals.css';
 import './responsive.css';
 import './accessibility.css';
+import './advanced.css';
+import './landing.css';
 export const metadata: Metadata = {
   title: { default: 'Loom · Production workspace', template: '%s · Loom' },
   description:
