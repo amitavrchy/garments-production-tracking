@@ -5,7 +5,7 @@ services:
       POSTGRES_USER: loom
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-loom_local}
       POSTGRES_DB: loom
-    ports: ["127.0.0.1:5432:5432"]
+    ports: ["127.0.0.1:55432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U loom"]
@@ -13,7 +13,7 @@ services:
       retries: 10
   redis:
     image: redis:7-alpine
-    ports: ["127.0.0.1:6379:6379"]
+    ports: ["127.0.0.1:56379:6379"]
     command: redis-server --appendonly yes
     volumes: ["redisdata:/data"]
 volumes:
