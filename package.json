@@ -17,7 +17,8 @@
     "verify": "npm run typecheck && npm test && npm run build",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "setup": "node scripts/setup.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
