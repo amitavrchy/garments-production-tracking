@@ -70,7 +70,8 @@ export class ReportsService {
         production.filter((p) => p.hourStart === i + 8),
         (p) => p.producedPcs,
       ),
-      target: target / 8,
+      target: target / (Number(process.env.DEFAULT_SHIFT_MINUTES || 480) / 60),
+      recorded: production.some((p) => p.hourStart === i + 8),
     }));
     const orderRows = orders.map((o) => {
       const b = wip.filter((b) => b.orderId === o.id);

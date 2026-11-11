@@ -80,6 +80,12 @@
 .table-scroll {
   position: relative;
 }
+.chart-wrap {
+  overflow-x: auto;
+}
+.chart-wrap svg {
+  min-width: 660px;
+}
 /* Keep animation feedback while presenting stable content immediately. */
 .page-enter {
   animation: page-arrive 0.25s ease;

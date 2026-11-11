@@ -197,6 +197,8 @@ run('PostgreSQL acceptance workflows', () => {
     const r = await reports.overview(actor, date);
     expect(r.efficiency).toBe(100);
     expect(r.dhu).toBeCloseTo(7);
+    expect(r.hourly.find((h) => h.hour === 8)?.recorded).toBe(true);
+    expect(r.hourly.find((h) => h.hour === 9)?.recorded).toBe(false);
   });
   it('excludes rejects and unresolved rework from finishing', async () => {
     await expect(make('finishing', { ...variant(), qty: 199, date })).rejects.toThrow(

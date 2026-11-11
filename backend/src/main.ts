@@ -1,14 +1,6 @@
 import 'reflect-metadata';
 import 'dotenv/config';
-import {
-  Module,
-  Controller,
-  Get,
-  Inject,
-  MiddlewareConsumer,
-  NestModule,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Module, Controller, Get, Inject } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import cookieParser from 'cookie-parser';
@@ -26,6 +18,14 @@ import { JobsService } from './jobs.service';
 import { OperationsController } from './operations.controller';
 const secret = process.env.JWT_SECRET;
 if (!secret || secret.length < 32) throw new Error('JWT_SECRET must have at least 32 characters');
+for (const [key, fallback, min, max] of [
+  ['DEFAULT_SHIFT_MINUTES', 480, 1, 1440],
+  ['CUT_OVER_PERCENT_BPS', 300, 0, 10000],
+] as const) {
+  const value = Number(process.env[key] ?? fallback);
+  if (!Number.isInteger(value) || value < min || value > max)
+    throw new Error(`${key} must be an integer between ${min} and ${max}`);
+}
 const origins = (process.env.CORS_ORIGINS || 'http://localhost:3300').split(',');
 @Controller('health')
 class HealthController {

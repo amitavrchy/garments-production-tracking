@@ -9,3 +9,4 @@ Project_spec.md
 artifacts
 playwright-report
 test-results
+**/next-env.d.ts
