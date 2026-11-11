@@ -1,0 +1,46 @@
+model Shipment {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  status String @default("PLANNED")
+  invoiceNo String
+  destination String
+  deliveryDate String
+  shippedAt DateTime?
+  @@unique([factoryId, invoiceNo])
+}
+model PackingCarton {
+  id String @id @default(cuid())
+  factoryId String
+  shipmentId String
+  orderId String
+  cartonNo String
+  color String
+  size String
+  pcs Int
+  @@unique([shipmentId, cartonNo])
+}
+model PieceRateEntry {
+  id String @id @default(cuid())
+  factoryId String
+  workerId String
+  operationId String
+  orderId String
+  date String
+  pcs Int
+  rateMinor Int
+  amountMinor Int
+  @@index([factoryId, workerId, date])
+}
+model PayrollRun {
+  id String @id @default(cuid())
+  factoryId String
+  name String
+  periodStart String
+  periodEnd String
+  status String @default("DRAFT")
+  totalMinor Int @default(0)
+  calculatedBy String?
+  approvedBy String?
+  breakdown Json?
+}
