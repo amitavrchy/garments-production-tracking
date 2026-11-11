@@ -1,0 +1,94 @@
+/* Maintain readable contrast for 14px operational text on light surfaces. */
+.main-shell .eyebrow,
+.page-heading p,
+.overview-strip,
+.metric-top,
+.metric-detail,
+.metric-value > span,
+.panel-head p,
+.chart-total > span,
+.chart-legend,
+.shift-stat,
+.shift-stat small,
+.line-card > p,
+.line-output span,
+.line-card-bottom,
+.cell-secondary,
+.table-hint,
+.pagination,
+.app-footer,
+.table-scroll th,
+.count-badge,
+.subtle-chip,
+.attention-item p,
+.report-summary span,
+.tabs button,
+.info-note,
+.form-footer > span,
+.record-details dt,
+.modal-head p,
+.field-hint,
+.readiness-item p,
+.login-help,
+.notifications p,
+.search-trigger,
+.breadcrumb {
+  color: #687364;
+}
+.metric-detail .positive,
+.positive {
+  color: #36734f;
+}
+.warning-text {
+  color: #94641e !important;
+}
+.badge.green {
+  color: #4c703d;
+}
+.badge.orange {
+  color: #8f651c;
+}
+.badge.red {
+  color: #a8513b;
+}
+.badge.neutral {
+  color: #657357;
+}
+.line-status.running {
+  color: #5c774f;
+}
+.line-card-bottom strong,
+.line-status {
+  color: #5a704b;
+}
+.attention-item strong,
+.report-download,
+.all-clear,
+.report-summary strong {
+  color: #67784d;
+}
+.login-form > p,
+.login-form .eyebrow,
+.login-form .login-help,
+.login-note,
+.login-bottom {
+  color: #6c795f;
+}
+.readiness-item div > span.positive {
+  color: #36734f;
+}
+.table-scroll {
+  position: relative;
+}
+/* Keep animation feedback while presenting stable content immediately. */
+.page-enter {
+  animation: page-arrive 0.25s ease;
+}
+@keyframes page-arrive {
+  from {
+    transform: translateY(5px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

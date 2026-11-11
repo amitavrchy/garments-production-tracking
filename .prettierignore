@@ -1,0 +1,11 @@
+node_modules
+.next
+dist
+coverage
+package-lock.json
+Project_spec.md
+**/AGENTS.md
+**/migrations
+artifacts
+playwright-report
+test-results
