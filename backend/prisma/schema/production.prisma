@@ -1,0 +1,61 @@
+model Allocation {
+  id String @id @default(cuid())
+  factoryId String
+  lineId String
+  orderId String
+  date String
+  target Int
+  @@unique([lineId, date])
+}
+model CuttingRecord {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  color String
+  size String
+  qty Int
+  layNumber String
+  status String @default("PLANNED")
+  date String
+}
+model HourlyProduction {
+  id String @id @default(cuid())
+  factoryId String
+  lineId String
+  orderId String
+  color String
+  size String
+  date String
+  hourStart Int
+  producedPcs Int
+  inputPcs Int
+  operators Int
+  availableMinutes Int @default(60)
+  enteredBy String
+  version Int @default(1)
+  @@unique([lineId, date, hourStart])
+}
+model QcInspection {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  lineId String
+  color String
+  size String
+  inspectedPcs Int
+  defectCode String
+  defectCount Int
+  reworkPcs Int
+  resolvedPcs Int @default(0)
+  rejectedPcs Int
+  date String
+}
+model FinishingRecord {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  color String
+  size String
+  qty Int
+  date String
+}
