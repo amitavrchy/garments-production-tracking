@@ -1,0 +1,70 @@
+name: Verify production workspace
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: loom
+          POSTGRES_PASSWORD: loom_ci
+          POSTGRES_DB: loom
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U loom"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+    env:
+      DATABASE_URL: postgresql://loom:loom_ci@localhost:5432/loom?schema=public
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-only-secret-with-more-than-thirty-two-characters
+      CORS_ORIGINS: http://localhost:3300
+      APP_URL: http://localhost:3300
+      PORT: 4400
+      API_URL: http://127.0.0.1:4400
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:4400
+      SEED_ADMIN_EMAIL: admin@loom.local
+      SEED_ADMIN_PASSWORD: ChangeMe123!
+      RUN_DB_TESTS: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run db:migrate
+      - run: npm run db:seed
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm audit --audit-level=moderate
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start production servers
+        run: |
+          npm run start -w backend > api.log 2>&1 &
+          npm run start -w frontend > web.log 2>&1 &
+          curl --retry 30 --retry-connrefused --retry-delay 1 -fsS http://localhost:4400/api/health
+          curl --retry 30 --retry-connrefused --retry-delay 1 -fsS http://localhost:3300 > /dev/null
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-artifacts
+          path: |
+            playwright-report/
+            test-results/
+            artifacts/
+            api.log
+            web.log
