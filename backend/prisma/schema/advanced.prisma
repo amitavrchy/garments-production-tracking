@@ -1,0 +1,285 @@
+model Supplier {
+  id String @id @default(cuid())
+  factoryId String
+  code String
+  name String
+  email String
+  country String
+  paymentTerms String
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([factoryId, code])
+}
+model PurchaseOrder {
+  id String @id @default(cuid())
+  factoryId String
+  number String
+  supplierId String
+  orderId String
+  bomItemId String
+  qty Float
+  unitCostMinor Int
+  currency String
+  exchangeRate Float
+  dueDate String
+  status String @default("DRAFT")
+  approvedBy String?
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([factoryId, number])
+}
+model MaterialLot {
+  id String @id @default(cuid())
+  factoryId String
+  lotNo String
+  supplierId String
+  orderId String
+  bomItemId String
+  warehouse String
+  bin String
+  shade String
+  gsm Float
+  widthCm Float
+  qty Float
+  issuedQty Float @default(0)
+  testResult String
+  status String @default("AVAILABLE")
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([factoryId, lotNo])
+}
+model LotIssue {
+  id String @id @default(cuid())
+  factoryId String
+  lotId String
+  orderId String
+  qty Float
+  kind String
+  date String
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model Bundle {
+  id String @id @default(cuid())
+  factoryId String
+  code String
+  cuttingId String
+  lineId String
+  qty Int
+  status String @default("CREATED")
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([factoryId, code])
+}
+model BundleEvent {
+  id String @id @default(cuid())
+  factoryId String
+  bundleId String
+  stage String
+  actorId String
+  at DateTime @default(now())
+}
+model Downtime {
+  id String @id @default(cuid())
+  factoryId String
+  lineId String
+  machineId String
+  date String
+  minutes Int
+  category String
+  reason String
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model Maintenance {
+  id String @id @default(cuid())
+  factoryId String
+  machineId String
+  title String
+  kind String
+  priority String
+  assignedTo String
+  dueDate String
+  spareCostMinor Int
+  resolution String
+  status String @default("OPEN")
+  completedAt DateTime?
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model Attendance {
+  id String @id @default(cuid())
+  factoryId String
+  workerId String
+  date String
+  clockIn Int
+  clockOut Int
+  breakMinutes Int
+  status String
+  workedMinutes Int
+  overtimeMinutes Int
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([workerId, date])
+}
+model WorkerSkill {
+  id String @id @default(cuid())
+  factoryId String
+  workerId String
+  operationId String
+  level Int
+  efficiency Float
+  trainedDate String
+  validUntil String
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([workerId, operationId])
+}
+model StationPlan {
+  id String @id @default(cuid())
+  factoryId String
+  lineId String
+  operationId String
+  date String
+  operators Int
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  @@unique([lineId, operationId, date])
+}
+model QualityAudit {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  lineId String
+  name String
+  lotSize Int
+  sampleSize Int
+  criticalCount Int
+  majorCount Int
+  minorCount Int
+  acceptMajor Int
+  acceptMinor Int
+  date String
+  status String @default("DRAFT")
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model CorrectiveAction {
+  id String @id @default(cuid())
+  factoryId String
+  auditId String
+  title String
+  rootCause String
+  containment String
+  corrective String
+  preventive String
+  ownerId String
+  dueDate String
+  status String @default("OPEN")
+  verifiedBy String?
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model CostSheet {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  name String
+  laborMinuteMinor Int
+  overheadMinor Int
+  packingMinor Int
+  freightMinor Int
+  sellingMinor Int
+  status String @default("DRAFT")
+  materialMinor Int @default(0)
+  totalMinor Int @default(0)
+  marginPercent Float @default(0)
+  breakdown Json?
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model ComplianceCheck {
+  id String @id @default(cuid())
+  factoryId String
+  title String
+  category String
+  ownerId String
+  dueDate String
+  severity String
+  notes String
+  evidenceUrl String
+  status String @default("OPEN")
+  reviewedBy String?
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model CapacityScenario {
+  id String @id @default(cuid())
+  factoryId String
+  name String
+  startDate String
+  days Int
+  efficiency Float
+  overtimeMinutes Int
+  operatorsOverride Int
+  status String @default("DRAFT")
+  result Json?
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model Subcontract {
+  id String @id @default(cuid())
+  factoryId String
+  supplierId String
+  orderId String
+  color String
+  size String
+  qty Int
+  receivedQty Int
+  sentDate String
+  dueDate String
+  status String @default("DRAFT")
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model SustainabilityRecord {
+  id String @id @default(cuid())
+  factoryId String
+  orderId String
+  date String
+  energyKwh Float
+  waterLiters Float
+  scrapKg Float
+  recycledKg Float
+  co2Factor Float
+  notes String
+  version Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+model MutationReceipt {
+  id String @id @default(cuid())
+  factoryId String
+  actorId String
+  key String
+  requestHash String
+  response Json
+  at DateTime @default(now())
+  @@unique([factoryId, actorId, key])
+}

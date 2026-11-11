@@ -10,7 +10,7 @@
     "test": "vitest run",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx prisma/seed.ts && tsx prisma/seed-advanced.ts",
     "provision:factory": "tsx scripts/provision-factory.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

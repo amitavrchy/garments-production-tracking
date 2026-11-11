@@ -1,3 +1,4 @@
+import type {AdvancedResource} from './advanced';
 export type Row = { id: string; [key: string]: any };
 export type User = Row & {
   name: string;
@@ -7,6 +8,7 @@ export type User = Row & {
   lineIds: string[];
 };
 export type Resource =
+  | AdvancedResource
   | 'factories'
   | 'floors'
   | 'lines'

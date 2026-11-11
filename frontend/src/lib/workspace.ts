@@ -5,7 +5,9 @@ import { api } from './api';
 import { Resource, Row, Overview, today } from './types';
 import { canRead } from './permissions';
 import { useSession } from '@/components/providers';
+import {advancedConfigs} from './advanced';
 const resources: Resource[] = [
+  ...Object.keys(advancedConfigs) as Resource[],
   'factories',
   'floors',
   'lines',
@@ -47,7 +49,9 @@ export function useWorkspace(date = today()) {
         ...available.map((r) => api<Row[]>(`/data/${r}`)),
       ]);
       setOverview(report as Overview);
-      setData(Object.fromEntries(available.map((r, i) => [r, lists[i]])));
+      const records=Object.fromEntries(available.map((r,i)=>[r,lists[i]]));
+      if(user.role!=='FACTORY_ADMIN')records.users=await api<Row[]>('/directory');
+      setData(records);
       setError('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load workspace');
@@ -82,6 +86,7 @@ export function useWorkspace(date = today()) {
     return (
       row?.poNumber ||
       row?.code ||
+      row?.number || row?.lotNo || row?.layNumber || row?.title ||
       row?.name ||
       row?.employeeCode ||
       row?.description ||

@@ -16,6 +16,8 @@ import { ReportsController } from './reports.controller';
 import { LiveGateway } from './live.gateway';
 import { JobsService } from './jobs.service';
 import { OperationsController } from './operations.controller';
+import {AdvancedController} from './advanced/advanced.controller';
+import {AdvancedService} from './advanced/advanced.service';
 const secret = process.env.JWT_SECRET;
 if (!secret || secret.length < 32) throw new Error('JWT_SECRET must have at least 32 characters');
 for (const [key, fallback, min, max] of [
@@ -43,8 +45,9 @@ class HealthController {
     DomainController,
     ReportsController,
     OperationsController,
+    AdvancedController,
   ],
-  providers: [PrismaService, AuthService, LiveGateway, DomainService, ReportsService, JobsService],
+  providers: [PrismaService, AuthService, LiveGateway, DomainService, ReportsService, JobsService,AdvancedService],
 })
 class AppModule {}
 async function bootstrap() {

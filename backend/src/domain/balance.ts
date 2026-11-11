@@ -5,7 +5,7 @@ import { sum } from './math';
 
 export async function balances(tx: Prisma.TransactionClient, actor: Actor, orderId?: string) {
   const where = { factoryId: actor.factoryId, ...(orderId ? { orderId } : {}) };
-  const [quantities, cutting, production, qc, finishing, cartons, shipments] = await Promise.all([
+  const [quantities, cutting, production, qc, finishing, cartons, shipments, subcontracts] = await Promise.all([
     tx.orderQuantity.findMany({ where }),
     tx.cuttingRecord.findMany({ where: { ...where, status: 'COMPLETED' } }),
     tx.hourlyProduction.findMany({ where }),
@@ -13,6 +13,7 @@ export async function balances(tx: Prisma.TransactionClient, actor: Actor, order
     tx.finishingRecord.findMany({ where }),
     tx.packingCarton.findMany({ where }),
     tx.shipment.findMany({ where }),
+    tx.subcontract.findMany({where:{...where,status:{in:['SENT','RECEIVED']}}}),
   ]);
   const detailed = production.flatMap((p) =>
     Array.isArray(p.breakdown)
@@ -28,8 +29,9 @@ export async function balances(tx: Prisma.TransactionClient, actor: Actor, order
     const match = (r: { orderId: string; color: string; size: string }) =>
       r.orderId === q.orderId && r.color === q.color && r.size === q.size;
     const cut = sum(cutting.filter(match), (r) => r.qty);
-    const input = sum(detailed.filter(match), (r) => r.inputPcs);
-    const sewn = sum(detailed.filter(match), (r) => r.producedPcs);
+    const external=subcontracts.filter(match);
+    const input = sum(detailed.filter(match), (r) => r.inputPcs)+sum(external,r=>r.qty);
+    const sewn = sum(detailed.filter(match), (r) => r.producedPcs)+sum(external.filter(s=>s.status==='RECEIVED'),r=>r.receivedQty);
     const rejected = sum(qc.filter(match), (r) => r.rejectedPcs);
     const rework = sum(qc.filter(match), (r) => r.reworkPcs - r.resolvedPcs);
     const inspected = sum(qc.filter(match), (r) => r.inspectedPcs);

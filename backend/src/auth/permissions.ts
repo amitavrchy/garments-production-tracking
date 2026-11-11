@@ -1,3 +1,4 @@
+import {advancedGrants} from '../advanced/catalog';
 export const roles = [
   'FACTORY_ADMIN',
   'MERCHANDISER',
@@ -46,6 +47,6 @@ const grants: Record<string, Role[]> = {
   payroll: ['ACCOUNTS'],
 };
 export function allowed(role: Role, resource: string) {
-  return role === 'FACTORY_ADMIN' || !!grants[resource]?.includes(role);
+  return role === 'FACTORY_ADMIN' || !!(grants[resource]||advancedGrants[resource])?.includes(role);
 }
 export const scopedLineRoles: Role[] = ['LINE_CHIEF', 'SUPERVISOR'];

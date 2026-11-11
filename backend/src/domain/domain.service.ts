@@ -19,6 +19,8 @@ import { transition } from './lifecycle';
 import { transitions } from './states';
 import { splitByRatio } from './ratios';
 import { LiveGateway } from '../live.gateway';
+import {advancedAction,isAdvanced,prepareAdvanced} from '../advanced/rules';
+import {createHash} from 'node:crypto';
 
 @Injectable()
 export class DomainService {
@@ -35,6 +37,7 @@ export class DomainService {
       throw new ForbiddenException('Your role cannot change this module');
   }
   async list(actor: Actor, resource: Resource) {
+    if(resource==='costing'&&!['FACTORY_ADMIN','ACCOUNTS','MERCHANDISER'].includes(actor.role))throw new ForbiddenException('Costing is restricted to commercial and accounts roles');
     if (
       (resource === 'payroll' && !['FACTORY_ADMIN', 'ACCOUNTS'].includes(actor.role)) ||
       (resource === 'pieceEntries' &&
@@ -51,7 +54,7 @@ export class DomainService {
       return safe;
     });
   }
-  async write(actor: Actor, resource: Resource, body: unknown, id?: string) {
+  async write(actor: Actor, resource: Resource, body: unknown, id?: string, idempotencyKey?:string) {
     this.authorize(actor, resource);
     requireThat(
       resource !== 'factories' || !!id,
@@ -62,12 +65,19 @@ export class DomainService {
       throw new BadRequestException(
         parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
       );
+    if(idempotencyKey)requireThat(idempotencyKey.length>=10&&idempotencyKey.length<=128,'Invalid idempotency key');
+    const requestHash=createHash('sha256').update(resource+JSON.stringify(parsed.data)).digest('hex');
     try {
       const result = await this.db.atomic(actor.factoryId, async (tx) => {
+        if(idempotencyKey&&!id){
+          const receipt=await tx.mutationReceipt.findUnique({where:{factoryId_actorId_key:{factoryId:actor.factoryId,actorId:actor.id,key:idempotencyKey}}});
+          if(receipt){if(receipt.requestHash!==requestHash)throw new ConflictException('Idempotency key was already used for a different request');return receipt.response as any;}
+        }
         const before = id ? await record(tx, actor, resource, id) : null;
         let data: Row = { ...parsed.data };
         await checkReferences(tx, actor, resource, data);
         if (before) await this.assertEditable(tx, actor, resource, before, data);
+        data=await prepareAdvanced(tx,actor,resource,data,before,(body as Row)?.expectedVersion);
         if (resource === 'users') {
           data.passwordHash = await hash(data.password, 12);
           delete data.password;
@@ -112,10 +122,13 @@ export class DomainService {
         });
         if (resource === 'assignments') await validateAssignments(tx, actor, data);
         if (resource === 'materials') await validateMaterials(tx, actor, data.orderId);
+        if(resource==='bundles')await tx.bundleEvent.create({data:{factoryId:actor.factoryId,bundleId:after.id,stage:'CREATED',actorId:actor.id}});
         const warnings = await validateBalances(tx, actor);
         await audit(tx, actor, resource, after.id, id ? 'UPDATE' : 'CREATE', before, after);
         const { passwordHash, ...safe } = after;
-        return { record: safe, warnings };
+        const response={record:safe,warnings};
+        if(idempotencyKey&&!id)await tx.mutationReceipt.create({data:{factoryId:actor.factoryId,actorId:actor.id,key:idempotencyKey,requestHash,response:JSON.parse(JSON.stringify(response))}});
+        return response;
       });
       this.live.changed(actor.factoryId, resource, result.record.lineId);
       return result;
@@ -132,7 +145,7 @@ export class DomainService {
   ) {
     if (before.status && transitions[resource])
       requireThat(
-        ['DRAFT', 'PLANNED'].includes(before.status),
+        ['DRAFT', 'PLANNED',...(isAdvanced(resource)?['OPEN','IN_PROGRESS','FAILED']:[])].includes(before.status),
         'Only draft or planned records can be edited',
       );
     if (resource === 'production' && scopedLineRoles.includes(actor.role))
@@ -181,7 +194,8 @@ export class DomainService {
         if (before.lineId && scopedLineRoles.includes(actor.role))
           requireThat(actor.lineIds.includes(before.lineId), 'Record belongs to another line');
         let after: Row;
-        if (resource === 'users' && typeof body.active === 'boolean') {
+        const advanced=await advancedAction(tx,actor,resource,before,body);
+        if(advanced){after=advanced;} else if (resource === 'users' && typeof body.active === 'boolean') {
           requireThat(id !== actor.id, 'You cannot deactivate your own account');
           after = await tx.user.update({ where: { id }, data: { active: body.active } });
         } else if (resource === 'qc' && body.action === 'resolve') {
@@ -221,6 +235,7 @@ export class DomainService {
         'finishing',
         'cartons',
         'materials',
+        'lots','lotIssues','bundles','downtime','maintenance','attendance','skills','stations','qualityAudits','correctiveActions','compliance','subcontracts','sustainability',
       ].includes(resource),
       'Operational records are retained for audit. Correct entries through edits.',
     );

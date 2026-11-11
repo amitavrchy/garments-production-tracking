@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { roles } from '../auth/permissions';
+import { advancedSchemas, advancedModels } from '../advanced/catalog';
 const text = z.string().trim().min(1).max(180);
 const id = text;
 const qty = z.number().int().min(1).max(10000000);
@@ -14,6 +15,7 @@ const date = z
   );
 const variant = { orderId: id, color: text, size: text };
 export const schemas = {
+  ...advancedSchemas,
   factories: z.object({ name: text }),
   floors: z.object({ name: text }),
   lines: z.object({ floorId: id, code: text, targetManpower: qty }),
@@ -106,6 +108,7 @@ export const schemas = {
 };
 export type Resource = keyof typeof schemas;
 export const models: Record<Resource, string> = {
+  ...advancedModels,
   factories: 'factory',
   floors: 'floor',
   lines: 'line',

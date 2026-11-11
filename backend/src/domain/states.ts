@@ -1,4 +1,6 @@
+import {advancedTransitions} from '../advanced/catalog';
 export const transitions: Record<string, Record<string, string[]>> = {
+  ...advancedTransitions,
   orders: {
     DRAFT: ['CONFIRMED', 'CANCELLED'],
     CONFIRMED: ['IN_PRODUCTION', 'CANCELLED'],
