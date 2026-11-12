@@ -430,10 +430,10 @@
 }
 .lp-pattern-tracer {
   stroke: var(--lp-accent);
-  stroke-width: 1.6;
-  stroke-dasharray: 90 1100;
-  animation: stitch-travel 11s linear infinite;
-  opacity: 0.85;
+  stroke-width: 3;
+  stroke-dasharray: 240 950;
+  animation: stitch-travel 5s linear infinite;
+  opacity: 1;
 }
 .lp-pattern-measure {
   position: absolute;
@@ -2059,17 +2059,111 @@
 }
 @keyframes loom-arrive {
   from {
-    transform: translateY(12px);
+    opacity: 0;
+    transform: translateY(32px);
   }
   to {
+    opacity: 1;
     transform: translateY(0);
   }
 }
-.lp-hero-top {
-  animation: loom-arrive 0.6s ease;
+.lp-hero-top > div:first-child > * {
+  animation: loom-arrive 1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.lp-stage-content {
-  animation: loom-arrive 0.25s ease;
+.lp-hero-top h1 {
+  animation-delay: 0.15s !important;
+}
+.lp-hero-description {
+  animation-delay: 0.3s !important;
+}
+.lp-hero-actions {
+  animation-delay: 0.45s !important;
+}
+.lp-hero-note {
+  animation-delay: 0.6s !important;
+}
+.lp-hero-aside {
+  animation: loom-arrive 1.2s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.lp-pattern > svg {
+  animation: loom-float 6s ease-in-out infinite;
+}
+.lp-pattern-scan {
+  animation: loom-scan 3.8s ease-in-out infinite;
+}
+.lp-pattern circle.active {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loom-checkpoint 2s ease-in-out infinite;
+}
+.lp-pattern-callout {
+  animation: loom-tag 4s ease-in-out infinite;
+}
+.lp-stage-content,
+.lp-role-content {
+  animation: loom-arrive 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lp-bento article {
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+@media (hover: hover) {
+  .lp-bento article:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 18px 32px #18272515;
+  }
+  .lp-button svg,
+  .lp-inline-link svg {
+    transition: transform 0.25s ease;
+  }
+  .lp-button:hover svg,
+  .lp-inline-link:hover svg {
+    transform: translate(3px, -3px);
+  }
+}
+@keyframes loom-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(-0.6deg);
+  }
+}
+@keyframes loom-scan {
+  0% {
+    transform: translateY(-155px);
+    opacity: 0;
+  }
+  12%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(150px);
+    opacity: 0;
+  }
+}
+@keyframes loom-checkpoint {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.65);
+    opacity: 0.55;
+  }
+}
+@keyframes loom-tag {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(1deg);
+  }
 }
 @media (min-width: 1750px) {
   .lp-hero {

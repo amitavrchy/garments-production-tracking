@@ -112,6 +112,40 @@ test('landing containers occupy 80 percent at mobile, tablet and wide desktop si
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.locator('.lp-pattern-tracer')).toHaveCSS('animation-name', 'none');
 });
+test('landing motion runs, reveals sections and stops when reduced motion is requested', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  const scan = page.locator('.lp-pattern-scan');
+  await expect(scan).toHaveCSS('animation-name', 'loom-scan');
+  const initial = await scan.evaluate((node) => getComputedStyle(node).transform);
+  await expect
+    .poll(() => scan.evaluate((node) => getComputedStyle(node).transform))
+    .not.toBe(initial);
+  const card = page.locator('.lp-bento article').first();
+  await card.scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      card.evaluate((node) =>
+        node.getAnimations().some((animation) => animation.playState === 'running'),
+      ),
+    )
+    .toBe(true);
+  await page
+    .getByRole('tablist', { name: 'Production journey' })
+    .getByRole('tab', { name: /Source/ })
+    .click();
+  await expect(page.locator('.lp-stage-content')).toHaveCSS('animation-name', 'loom-arrive');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(scan).toHaveCSS('animation-name', 'none');
+  await expect
+    .poll(() =>
+      page.locator('.landing').evaluate((node) => node.getAnimations({ subtree: true }).length),
+    )
+    .toBe(0);
+});
+
 test('every advanced workspace loads real persisted data', async ({ page }) => {
   await signIn(page);
   for (const [path, heading] of [

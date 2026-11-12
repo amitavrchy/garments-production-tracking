@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -151,6 +151,50 @@ const faqs = [
   ],
 ];
 export function Landing() {
+  const landingRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = landingRef.current;
+    if (!root) return;
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const animations = new Set<Animation>();
+    let observer: IntersectionObserver | undefined;
+    const configure = () => {
+      observer?.disconnect();
+      animations.forEach((animation) => animation.cancel());
+      animations.clear();
+      if (preference.matches) return;
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            const animation = entry.target.animate(
+              [
+                { opacity: 0, transform: 'translateY(48px)' },
+                { opacity: 1, transform: 'translateY(0)' },
+              ],
+              { duration: 850, easing: 'cubic-bezier(.16,1,.3,1)' },
+            );
+            animations.add(animation);
+            animation.onfinish = () => animations.delete(animation);
+            observer?.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.12 },
+      );
+      root
+        .querySelectorAll(
+          '.lp-section-title, .lp-bento article, .lp-centered-title, .lp-stage-tabs, .lp-role-tabs, .lp-calculator-layout > div, .lp-trust-grid article, .lp-faq-layout > div, .lp-final .lp-container, .lp-product-preview:not(.compact)',
+        )
+        .forEach((element) => observer?.observe(element));
+    };
+    configure();
+    preference.addEventListener('change', configure);
+    return () => {
+      observer?.disconnect();
+      animations.forEach((animation) => animation.cancel());
+      preference.removeEventListener('change', configure);
+    };
+  }, []);
   const [menu, setMenu] = useState(false),
     [stage, setStage] = useState(0),
     [role, setRole] = useState(0),
@@ -164,7 +208,7 @@ export function Landing() {
   const capacity = Math.floor((operators * minutes * (eff / 100)) / smv),
     active = stages[stage];
   return (
-    <div className="landing">
+    <div className="landing" ref={landingRef}>
       <a className="lp-skip" href="#product">
         Skip to product
       </a>
@@ -490,7 +534,7 @@ export function Landing() {
                 </button>
               ))}
             </div>
-            <div className="lp-stage-content">
+            <div className="lp-stage-content" key={stage}>
               <div className="lp-stage-number" aria-hidden="true">
                 0{stage + 1}
                 <active.icon size={72} strokeWidth={1} />
@@ -541,7 +585,7 @@ export function Landing() {
                 </button>
               ))}
             </div>
-            <div className="lp-role-content">
+            <div className="lp-role-content" key={role}>
               <div>
                 <span className="lp-overline">{roles[role].metric}</span>
                 <h3>{roles[role].title}</h3>
@@ -845,6 +889,9 @@ function ProductionSchematic({
             aria-label="Technical apparel pattern with connected seam checkpoints"
           >
             <defs>
+              <clipPath id="loom-garment-clip">
+                <path d="M150 60L112 80L60 145L100 180L120 155V300H300V155L320 180L360 145L308 80L270 60Q210 105 150 60Z" />
+              </clipPath>
               <pattern id="loom-weave" width="9" height="9" patternUnits="userSpaceOnUse">
                 <path
                   d="M0 0H9M0 0V9"
@@ -865,6 +912,12 @@ function ProductionSchematic({
               d="M155 70Q210 119 265 70M119 87L75 143L99 165L130 140V289H290V140L321 165L345 143L301 87M210 100V290M130 277H290M114 94L154 115M266 115L306 94"
               fill="none"
             />
+            <g clipPath="url(#loom-garment-clip)" aria-hidden="true">
+              <g className="lp-pattern-scan">
+                <rect x="50" y="150" width="320" height="45" fill="#d5ecab" opacity=".12" />
+                <path d="M50 195H370" stroke="#d5ecab" strokeWidth="2.5" />
+              </g>
+            </g>
             <path
               className="lp-pattern-guide"
               d="M35 300H388M120 328V305M300 328V305M120 319H300M210 32V319M73 126L44 101M327 126L377 102"

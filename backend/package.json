@@ -3,9 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
-    "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/main.js",
+    "dev": "node init && tsx watch src/main.ts",
+    "build": "node init && tsc -p tsconfig.build.json",
+    "start": "node init && node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "db:generate": "prisma generate",
@@ -17,8 +17,8 @@
     "setup": "node scripts/setup.mjs",
     "verify": "npm run format:check && npm run typecheck && npm test && npm run build",
     "audit": "npm audit --audit-level=moderate",
-    "dev:all": "node scripts/dev-all.mjs",
-    "start:all": "node scripts/dev-all.mjs --production",
+    "dev:all": "node init && node scripts/dev-all.mjs",
+    "start:all": "node init && node scripts/dev-all.mjs --production",
     "verify:all": "node scripts/verify-all.mjs"
   },
   "dependencies": {

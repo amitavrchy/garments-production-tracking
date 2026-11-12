@@ -1,5 +1,7 @@
 # Verification record
 
+Landing motion follow-up (12 November 2026): four focused Playwright tests pass in installed Microsoft Edge against the production build. The new motion check samples the animated scan transform, observes a running section reveal after scrolling, checks workflow transition animation, and confirms all descendant animations stop when reduced motion is enabled at runtime. Hero copy enters in sequence; the garment illustration floats with a moving clipped scan, brighter seam tracer and pulsing checkpoints. Buttons stay stationary. Next.js production build/TypeScript and formatting pass. Bundled Chromium failed to launch on this machine, so this run uses Edge.
+
 Landing design revision (12 November 2026): production build and TypeScript compilation pass. Three focused Playwright checks pass against the production server: interactive garment checkpoints/product tour/workflow/roles/FAQ/calculator; mobile navigation with minimum 14px HTML text and no horizontal page overflow; exact 80% section containers at 390, 768, 1024, 1440 and 1920px with reduced-motion support. Refreshed desktop, hero and mobile screenshots were visually reviewed. This revision changes the public landing page only; the full application results below are from the preceding verification run.
 
 Verified locally on **12 November 2026 (Asia/Dhaka)** with Node 24.18, Next.js 16.4.6, NestJS 11.2.9, Prisma 7.10.1, PostgreSQL 17 and Redis 7.
