@@ -215,39 +215,22 @@ export function Landing() {
               <div>
                 <div className="lp-overline">
                   <i />
-                  THE OPERATING SYSTEM FOR APPAREL
+                  APPAREL PRODUCTION INTELLIGENCE
                 </div>
                 <h1>
-                  Every thread.
+                  Production.
                   <br />
-                  One connected
+                  Connected
                   <br />
-                  <span>factory.</span>
-                  <svg aria-hidden="true" viewBox="0 0 345 22">
-                    <path
-                      d="M3 15C82 1 210 2 341 12M78 20C166 12 245 11 319 15"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                  <span>at every seam.</span>
                 </h1>
-              </div>
-              <div className="lp-hero-aside">
-                <span className="lp-thread-symbol" aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                <p>
-                  From the first cut to the final carton. Bring your floor, your people, and every
-                  production decision into focus.
+                <p className="lp-hero-description">
+                  Turn orders, materials, people and production into one continuous thread. A clear
+                  signal from the cutting table to the last carton.
                 </p>
                 <div className="lp-hero-actions">
                   <Link href="/workspace" className="lp-button">
-                    Explore your workspace
+                    Enter the workspace
                     <ArrowUpRight size={19} />
                   </Link>
                   <button className="lp-play" onClick={() => setTour(true)}>
@@ -259,16 +242,33 @@ export function Landing() {
                 </div>
                 <div className="lp-hero-note">
                   <Check size={15} />
-                  Built for Bangladesh’s production floor
+                  Built around Bangladesh’s production floor
                 </div>
               </div>
+              <div className="lp-hero-aside">
+                <ProductionSchematic stage={stage} onStage={setStage} />
+              </div>
+            </div>
+            <div className="lp-hero-index">
+              <span>
+                <i />
+                CONNECTED FACTORY SYSTEM
+              </span>
+              <span>
+                01 / PLAN<span>02 / MAKE</span>03 / DELIVER
+              </span>
+              <a href="#product">
+                Explore the platform
+                <ArrowDown />
+              </a>
             </div>
             <div className="lp-preview-stage" id="product">
               <div className="lp-preview-heading">
                 <div>
-                  <span className="lp-live-dot" />A CLEARER VIEW OF WHAT’S NEXT
+                  <span className="lp-live-dot" />
+                  THE FLOOR, TRANSLATED INTO SIGNAL
                 </div>
-                <span>Interactive preview · sample data</span>
+                <span>01 — CONTROL ROOM / SAMPLE DATA</span>
               </div>
               <ProductPreview view={preview} onView={setPreview} />
               <div className="lp-floating-ticket">
@@ -276,8 +276,8 @@ export function Landing() {
                   <ScanLine size={23} />
                 </span>
                 <div>
-                  <strong>A digital thread for every bundle</strong>
-                  <span>BDL-2026-0001 · At quality checkpoint</span>
+                  <strong>Trace the handoff.</strong>
+                  <span>BDL-2026-0001 / Quality checkpoint</span>
                 </div>
                 <CheckCircle2 size={22} />
               </div>
@@ -299,7 +299,7 @@ export function Landing() {
             <span>
               ONE FLOW.
               <br />
-              <strong>NO LOST THREADS.</strong>
+              <strong>FROM PO TO PORT.</strong>
             </span>
             <div>
               {['Buyer PO', 'Materials', 'Cutting', 'Sewing', 'Quality', 'Shipment'].map((s, i) => (
@@ -316,16 +316,16 @@ export function Landing() {
           <div className="lp-container">
             <div className="lp-section-title">
               <div>
-                <span className="lp-overline">BUILT AROUND THE WAY YOU MAKE</span>
+                <span className="lp-overline">02 / THE MANUFACTURING SYSTEM</span>
                 <h2>
-                  Less scattered work.
+                  A system that knows
                   <br />
-                  <span>More shared clarity.</span>
+                  <span>the shape of your work.</span>
                 </h2>
               </div>
               <p>
-                Production is a chain of decisions. Loom keeps the context connected—so each team
-                can move the work forward.
+                Capacity. Material. Quality. Margin. Follow the constraints that shape every
+                garment, and make the next decision with the whole picture.
               </p>
             </div>
             <div className="lp-bento">
@@ -805,6 +805,127 @@ export function Landing() {
           </div>
         </Modal>
       )}
+    </div>
+  );
+}
+function ProductionSchematic({
+  stage,
+  onStage,
+}: {
+  stage: number;
+  onStage: (stage: number) => void;
+}) {
+  const status = [
+    'Capacity mapped',
+    'Materials linked',
+    'Sewing in progress',
+    'Quality checkpoint',
+    'Ready for dispatch',
+  ][stage];
+  return (
+    <div className="lp-schematic" aria-label="Interactive garment production schematic">
+      <div className="lp-spec-head">
+        <span>
+          <i />
+          THE DIGITAL THREAD
+        </span>
+        <span>MODEL / 001</span>
+      </div>
+      <div className="lp-spec-body">
+        <div className="lp-spec-meta">
+          <span>STYLE ST-2401</span>
+          <strong>Essential cotton tee</strong>
+          <span>180 GSM / ORGANIC JERSEY</span>
+        </div>
+        <div className="lp-pattern">
+          <span className="lp-pattern-code">PATTERN / FRONT</span>
+          <svg
+            viewBox="0 0 420 360"
+            role="img"
+            aria-label="Technical apparel pattern with connected seam checkpoints"
+          >
+            <defs>
+              <pattern id="loom-weave" width="9" height="9" patternUnits="userSpaceOnUse">
+                <path
+                  d="M0 0H9M0 0V9"
+                  fill="none"
+                  stroke="#b6c1b5"
+                  strokeOpacity=".13"
+                  strokeWidth=".5"
+                />
+              </pattern>
+            </defs>
+            <path
+              className="lp-pattern-outline"
+              d="M150 60L112 80L60 145L100 180L120 155V300H300V155L320 180L360 145L308 80L270 60Q210 105 150 60Z"
+              fill="url(#loom-weave)"
+            />
+            <path
+              className="lp-pattern-seam"
+              d="M155 70Q210 119 265 70M119 87L75 143L99 165L130 140V289H290V140L321 165L345 143L301 87M210 100V290M130 277H290M114 94L154 115M266 115L306 94"
+              fill="none"
+            />
+            <path
+              className="lp-pattern-guide"
+              d="M35 300H388M120 328V305M300 328V305M120 319H300M210 32V319M73 126L44 101M327 126L377 102"
+              fill="none"
+            />
+            {[
+              [150, 60],
+              [112, 80],
+              [60, 145],
+              [120, 155],
+              [120, 300],
+              [300, 300],
+              [300, 155],
+              [360, 145],
+              [308, 80],
+              [270, 60],
+            ].map(([cx, cy], i) => (
+              <circle
+                key={i}
+                cx={cx}
+                cy={cy}
+                r={i % 5 === stage ? 5 : 2.5}
+                className={i % 5 === stage ? 'active' : ''}
+              />
+            ))}
+            <path
+              className="lp-pattern-tracer"
+              d="M150 60L112 80L60 145L100 180L120 155V300H300V155L320 180L360 145L308 80L270 60"
+              fill="none"
+            />
+          </svg>
+          <span className="lp-pattern-measure">SIZE M · 01:01</span>
+          <span className="lp-pattern-side">SEAM ALLOWANCE / 10 MM</span>
+          <div className="lp-pattern-callout">
+            <span className="lp-live-dot" />
+            <strong>{status}</strong>
+            <span>CHECKPOINT 0{stage + 1}</span>
+          </div>
+        </div>
+        <div className="lp-spec-ruler" aria-hidden="true">
+          {Array.from({ length: 31 }, (_, i) => (
+            <i key={i} className={i % 5 === 0 ? 'major' : ''} />
+          ))}
+        </div>
+      </div>
+      <div className="lp-spec-stages" aria-label="Explore garment checkpoints">
+        {stages.map((s, i) => (
+          <button key={s.name} onClick={() => onStage(i)} aria-pressed={stage === i}>
+            <span>0{i + 1}</span>
+            {s.name}
+            <i />
+          </button>
+        ))}
+      </div>
+      <div className="lp-spec-foot">
+        <span>
+          <ScanLine size={17} />
+          BDL-2026-0001
+        </span>
+        <span>ILLUSTRATIVE WORKFLOW</span>
+      </div>
     </div>
   );
 }

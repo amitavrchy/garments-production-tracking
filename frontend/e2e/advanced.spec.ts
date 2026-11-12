@@ -11,8 +11,13 @@ test('public landing has a working product tour, workflow explorer, FAQ and capa
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Every thread. One connected factory.' }),
+    page.getByRole('heading', { name: 'Production. Connected at every seam.' }),
   ).toBeVisible();
+  await page
+    .locator('.lp-spec-stages')
+    .getByRole('button', { name: /Deliver/ })
+    .click();
+  await expect(page.locator('.lp-pattern-callout')).toContainText('Ready for dispatch');
   await page.getByRole('button', { name: 'Take a product tour' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Planning', exact: true }).click();
@@ -44,7 +49,7 @@ test('public landing has a working product tour, workflow explorer, FAQ and capa
   ).toBeVisible();
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Every thread. One connected factory.' }),
+    page.getByRole('heading', { name: 'Production. Connected at every seam.' }),
   ).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -88,6 +93,24 @@ test('landing mobile menu, text sizing and overflow are correct', async ({ page 
     fullPage: true,
     animations: 'disabled',
   });
+});
+
+test('landing containers occupy 80 percent at mobile, tablet and wide desktop sizes', async ({
+  page,
+}) => {
+  await page.goto('/');
+  for (const width of [390, 768, 1024, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const widths = await page
+      .locator('.lp-container')
+      .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
+    for (const actual of widths) expect(Math.abs(actual - width * 0.8)).toBeLessThan(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('.lp-pattern-tracer')).toHaveCSS('animation-name', 'none');
 });
 test('every advanced workspace loads real persisted data', async ({ page }) => {
   await signIn(page);
