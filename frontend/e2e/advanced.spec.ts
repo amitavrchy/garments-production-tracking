@@ -42,6 +42,10 @@ test('public landing has a working product tour, workflow explorer, FAQ and capa
       'Factory-scoped access, role and line permissions, database constraints, transaction locks and before/after audits protect operational changes. Sensitive financial reads and independent approvals are controlled separately.',
     ),
   ).toBeVisible();
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'Every thread. One connected factory.' }),
+  ).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: 'artifacts/landing-hero.png', animations: 'disabled' });
@@ -123,6 +127,10 @@ test('capacity scenarios simulate persisted orders and show a reconciled proposa
   await expect(page.getByRole('dialog').locator('.scenario-result tbody tr').first()).toBeVisible();
   await page.getByRole('button', { name: 'Close dialog' }).click();
   await page.getByRole('button', { name: 'Operation balance', exact: true }).click();
+  const allocations = await (await page.request.get('/api/data/allocations')).json();
+  await page
+    .getByLabel('Balance date')
+    .fill(allocations.find((row: { lineId: string }) => row.lineId === 'line-1').date);
   await expect(page.getByText('Assumption: 80% efficiency')).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'Qualified workers' })).toBeVisible();
   await page.screenshot({

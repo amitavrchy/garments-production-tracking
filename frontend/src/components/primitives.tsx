@@ -98,16 +98,20 @@ export function Modal({
   children,
   onClose,
   wide = false,
+  busy = false,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  busy?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null),
     close = useRef(onClose);
-  close.current = onClose;
+  close.current = () => {
+    if (!busy) onClose();
+  };
   useEffect(() => {
     const previous = document.activeElement as HTMLElement;
     const old = document.body.style.overflow;
@@ -142,7 +146,7 @@ export function Modal({
     <div
       className="modal-backdrop"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (!busy && e.target === e.currentTarget) onClose();
       }}
     >
       <div
@@ -158,7 +162,12 @@ export function Modal({
             <h2 id="modal-title">{heading}</h2>
             {subtitle && <p>{subtitle}</p>}
           </div>
-          <button className="icon-button" onClick={onClose} aria-label="Close dialog">
+          <button
+            className="icon-button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            disabled={busy}
+          >
             <X size={21} />
           </button>
         </div>

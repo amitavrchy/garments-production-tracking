@@ -153,7 +153,7 @@ export function ResourceWorkspace({ module }: { module: string }) {
       setToast(
         result.warnings?.length ? result.warnings.join(' · ') : 'Record updated successfully',
       );
-      await refresh();
+      void refresh();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Action failed');
     } finally {
@@ -405,6 +405,7 @@ export function ResourceWorkspace({ module }: { module: string }) {
       {selected && (
         <Modal
           title={`${rc.singular} details`}
+          busy={busy}
           subtitle={selected.id}
           onClose={() => {
             if (!busy) setSelected(null);

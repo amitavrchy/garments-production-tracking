@@ -79,6 +79,7 @@ export function OfflineOutbox() {
       </button>
       {open && (
         <Modal
+          busy={busy}
           title="Production outbox"
           subtitle="Drafts stay on this browser and sync only for the signed-in user and factory."
           onClose={() => !busy && setOpen(false)}

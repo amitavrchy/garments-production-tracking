@@ -72,10 +72,16 @@ test('buyer create edit and draft deletion persist through the API', async ({ pa
 });
 test('hourly form surfaces duplicate slot validation', async ({ page }) => {
   await login(page);
+  const fixtures = await (await page.request.get('/api/data/production')).json();
+  const fixture = fixtures.find(
+    (entry: { lineId: string; hourStart: number }) =>
+      entry.lineId === 'line-1' && entry.hourStart === 8,
+  );
   await page.goto('/production?new=1');
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.getByLabel('Production line', { exact: true }).selectOption('line-1');
   await page.getByLabel('Purchase order', { exact: true }).selectOption('order-1');
+  await page.getByLabel('Production date', { exact: true }).fill(fixture.date);
   await page.getByLabel('Hour start (24-hour)', { exact: true }).fill('8');
   await page.getByRole('button', { name: 'Save record' }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Duplicate record');

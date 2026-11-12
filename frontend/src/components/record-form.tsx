@@ -103,6 +103,7 @@ export function RecordForm({
   }
   return (
     <Modal
+      busy={busy}
       title={`${record ? 'Edit' : 'New'} ${config.singular.toLowerCase()}`}
       subtitle={config.description}
       onClose={() => !busy && onClose()}

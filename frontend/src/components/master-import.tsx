@@ -76,6 +76,7 @@ export function MasterImport({
       </button>
       {open && (
         <Modal
+          busy={busy}
           title={`Import ${configs[resource].name.toLowerCase()}`}
           subtitle="Up to 500 rows. Every row validates before one atomic database transaction."
           onClose={() => !busy && setOpen(false)}
